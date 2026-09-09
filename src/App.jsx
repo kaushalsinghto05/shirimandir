@@ -188,7 +188,7 @@ export default function App() {
       />
 
       {/* 2. Main Page Render */}
-      <main className="flex-1">
+      <main className={`flex-1 ${activeTab !== 'home' ? 'pt-16 md:pt-20' : ''}`}>
         {isAdminMode ? (
           <AdminDashboard
             onExitAdmin={() => setIsAdminMode(false)}

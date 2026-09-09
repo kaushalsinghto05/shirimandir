@@ -69,7 +69,7 @@ export default function LiveDarshanQueueSection({ temples, onSelectTemple, wishl
                     src={temple.image || `/images/temple-${temple.id}.jpg`}
                     alt={temple.name}
                     className="w-full h-full object-cover"
-                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1600100397608-f010f419cb96?auto=format&fit=crop&w=800&q=80'; }}
+                    onError={(e) => { e.target.src = '/images/kashi_vishwanath.jpg'; }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-transparent to-transparent"></div>
                   
@@ -104,7 +104,7 @@ export default function LiveDarshanQueueSection({ temples, onSelectTemple, wishl
                         <span className="absolute inline-flex w-full h-full rounded-full bg-sage-400 opacity-20 animate-ping"></span>
                         <span className="relative inline-flex rounded-full w-2.5 h-2.5 bg-sage-500"></span>
                       </div>
-                      <span>{temple.onlineCount || 102} devotees online</span>
+                      <span>{(temple.onlineDevotees || temple.onlineCount || 3420).toLocaleString('en-IN')} devotees online</span>
                     </div>
                   </div>
 

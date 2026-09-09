@@ -96,17 +96,17 @@ export default function TempleDirectory({ temples, onSelectTemple, wishlist, onT
                     </div>
                     <div className="flex items-center text-sm font-semibold text-charcoal-900">
                       <Star className="w-4 h-4 text-temple-gold-500 fill-temple-gold-500 mr-1" />
-                      {temple.rating} <span className="text-charcoal-500 font-normal ml-1">({temple.reviews})</span>
+                      {temple.rating} <span className="text-charcoal-500 font-normal ml-1">({typeof temple.reviewCount === 'number' ? temple.reviewCount.toLocaleString('en-IN') : (Array.isArray(temple.reviews) ? temple.reviews.length : '12K')})</span>
                     </div>
                   </div>
                   
-                  {temple.waitTime && (
+                  {(temple.waitMinutes !== undefined || temple.waitTime) && (
                     <div className="mb-5 flex items-center gap-2">
                       <span className="text-xs text-charcoal-500 font-sans flex items-center gap-1">
                         <Clock className="w-3 h-3" /> Wait Time:
                       </span>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getWaitTimeColor(temple.waitTimeStatus)}`}>
-                        {temple.waitTime}
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getWaitTimeColor(temple.waitStatus || temple.waitTimeStatus)}`}>
+                        {temple.waitMinutes ? `${temple.waitMinutes} mins` : temple.waitTime}
                       </span>
                     </div>
                   )}
