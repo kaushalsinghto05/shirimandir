@@ -1,144 +1,85 @@
 import React, { useState } from 'react';
-import { X, BookOpen, Play, Pause, Volume2, Sparkles } from 'lucide-react';
+import { X, BookOpen, PlayCircle, Clock } from 'lucide-react';
 import { DEVOTIONAL_LIBRARY } from '../data/mockData';
 
 export default function DevotionalLibraryModal({ isOpen, onClose }) {
-  const [selectedTrack, setSelectedTrack] = useState(DEVOTIONAL_LIBRARY[0]);
-  const [isPlaying, setIsPlaying] = useState(false);
-
+  const [activeFilter, setActiveFilter] = useState('All');
+  
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-sanctum-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
-      <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-sanctum-lg border border-gold-500/30 overflow-hidden flex flex-col max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="bg-sanctum-950 text-white p-6 border-b border-gold-500/30 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-serif font-bold text-lg text-white">Vedic Devotional Library</h3>
-              <p className="text-xs text-sandstone-300">Aartis, Chalisas, Suktams & Chanted Stotrams</p>
-            </div>
-          </div>
+  const filters = ['All', 'Stotrams', 'Chalisas', 'Suktams', 'Ashtakams', 'Vedic Mantras'];
 
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-sanctum-900 border border-white/20 text-white hover:bg-sanctum-850"
-          >
-            <X className="w-4 h-4" />
+  const filteredItems = DEVOTIONAL_LIBRARY?.filter(item => 
+    activeFilter === 'All' || item.category === activeFilter
+  ) || [];
+
+  return (
+    <div className="fixed inset-0 bg-charcoal-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+      <div className="bg-ivory-50 rounded-3xl w-full max-w-2xl h-[85vh] shadow-elevated relative animate-scale-in flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-ivory-200 bg-white rounded-t-3xl flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="bg-copper-100 p-2.5 rounded-xl">
+              <BookOpen className="w-6 h-6 text-copper-600" />
+            </div>
+            <h2 className="font-display text-2xl font-bold text-charcoal-900">Devotional Library</h2>
+          </div>
+          <button onClick={onClose} className="text-charcoal-400 hover:text-charcoal-900 bg-ivory-100 hover:bg-ivory-200 p-2.5 rounded-full transition-colors">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Body Content */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          
-          {/* Active Player Card */}
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-sanctum-950 to-sanctum-900 text-white border border-gold-500/30 shadow-sanctum">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                {selectedTrack.thumbnail && (
-                  <img
-                    src={selectedTrack.thumbnail}
-                    alt={selectedTrack.deity}
-                    className="w-16 h-16 rounded-2xl object-cover border-2 border-gold-500/50 shadow-gold-glow shrink-0"
-                  />
-                )}
-                <div>
-                  <span className="text-[10px] font-bold text-gold-400 uppercase tracking-widest">
-                    {selectedTrack.category} • {selectedTrack.deity}
-                  </span>
-                  <h4 className="text-xl font-serif font-bold text-white mt-0.5">
-                    {selectedTrack.title}
-                  </h4>
-                  <p className="text-xs text-sandstone-300">
-                    Composer: {selectedTrack.author} • Duration: {selectedTrack.duration}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 self-end sm:self-center">
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="w-12 h-12 rounded-full bg-gradient-to-r from-gold-500 to-gold-400 text-sanctum-950 flex items-center justify-center shadow-gold-glow hover:scale-105 transition-transform"
-                >
-                  {isPlaying ? <Pause className="w-5 h-5 fill-sanctum-950" /> : <Play className="w-5 h-5 fill-sanctum-950 ml-0.5" />}
-                </button>
-                <span className="text-xs font-semibold text-gold-300">
-                  {isPlaying ? 'Chanting Playing...' : 'Listen Audio'}
-                </span>
-              </div>
-            </div>
-
-            {/* Simulated Audio Progress Bar */}
-            <div className="mt-4 pt-3 border-t border-sanctum-800">
-              <div className="w-full h-1.5 bg-sanctum-800 rounded-full overflow-hidden">
-                <div className={`h-full bg-gold-500 rounded-full ${isPlaying ? 'w-2/5' : 'w-0'} transition-all duration-500`}></div>
-              </div>
-            </div>
+        {/* Filters */}
+        <div className="px-6 pt-4 pb-2 bg-white shrink-0">
+          <div className="flex overflow-x-auto space-x-2 scrollbar-hide pb-2">
+            {filters.map(filter => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeFilter === filter 
+                    ? 'bg-copper-400 text-white shadow-sm' 
+                    : 'bg-ivory-100 text-charcoal-600 hover:bg-ivory-200'
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
           </div>
-
-          {/* Shloka Text Preview */}
-          <div className="p-5 rounded-2xl bg-sandstone-50 border border-sandstone-200">
-            <h5 className="font-serif font-bold text-sm text-sanctum-950 mb-2">
-              Sacred Sanskrit Shloka & English Transliteration:
-            </h5>
-            <div className="font-serif text-sm text-sandstone-800 italic leading-relaxed space-y-2">
-              <p>
-                ॥ जटाटवीगलज्जलप्रवाहपावितस्थले गलेऽवलम्ब्य लम्बितां भुजङ्गतुङ्गमालिकाम् ।<br />
-                डमड्डमड्डमड्डमन्निनादवड्डमर्वयं चकार चण्डताण्डवं तनोतु नः शिवः शिवम् ॥
-              </p>
-              <p className="text-xs text-sandstone-600 not-italic">
-                "With his neck consecrated by the flow of water that trickles from his hair, and on his neck holding the tall snake like a garland, and of the Damaru sounding Damad-damad-damad-damad, may Lord Shiva bless our existence."
-              </p>
-            </div>
-          </div>
-
-          {/* Track List */}
-          <div>
-            <h5 className="font-serif font-bold text-sm text-sanctum-950 mb-3">Devotional Stotram Catalog</h5>
-            <div className="space-y-2">
-              {DEVOTIONAL_LIBRARY.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedTrack(item);
-                    setIsPlaying(true);
-                  }}
-                  className={`p-3.5 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${
-                    selectedTrack.id === item.id
-                      ? 'border-gold-500 bg-gold-50/70 shadow-sm'
-                      : 'border-sandstone-200 bg-white hover:bg-sandstone-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {item.thumbnail ? (
-                      <img
-                        src={item.thumbnail}
-                        alt={item.deity}
-                        className="w-11 h-11 rounded-xl object-cover border border-gold-500/40 shadow-sm shrink-0"
-                      />
-                    ) : (
-                      <div className="w-11 h-11 rounded-xl bg-sanctum-950 text-gold-400 flex items-center justify-center font-bold text-xs shrink-0">
-                        ॐ
-                      </div>
-                    )}
-                    <div>
-                      <h6 className="font-serif font-bold text-xs text-sanctum-950">{item.title}</h6>
-                      <span className="text-[10px] text-sandstone-500">{item.deity} • {item.author}</span>
-                    </div>
-                  </div>
-
-                  <span className="text-xs font-mono font-medium text-sandstone-500">{item.duration}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
         </div>
 
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 bg-ivory-50">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {filteredItems.map((item, idx) => (
+              <div key={idx} className="bg-white rounded-2xl p-3 flex gap-4 shadow-sm border border-ivory-200 hover:shadow-warm hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer">
+                <div className="w-20 h-20 rounded-xl overflow-hidden relative shrink-0">
+                  <img src={item.imageUrl || '/images/placeholder.jpg'} alt={item.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-charcoal-900/20 group-hover:bg-charcoal-900/40 transition-colors flex items-center justify-center">
+                    <PlayCircle className="w-8 h-8 text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0 py-1">
+                  <h4 className="font-sans font-bold text-charcoal-900 text-sm truncate">{item.title}</h4>
+                  <p className="text-xs text-charcoal-500 mt-1 truncate">{item.deity}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-charcoal-400 truncate max-w-[80px]">{item.author}</p>
+                    <div className="flex items-center gap-1 text-xs font-medium text-copper-600 bg-copper-50 px-2 py-0.5 rounded-md">
+                      <Clock className="w-3 h-3" />
+                      {item.duration}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {filteredItems.length === 0 && (
+              <div className="col-span-full py-12 text-center text-charcoal-500">
+                No items found in this category.
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

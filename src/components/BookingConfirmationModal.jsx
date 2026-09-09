@@ -1,180 +1,99 @@
-import React from 'react';
-import { 
-  CheckCircle2, 
-  Sparkles, 
-  FileText, 
-  Truck, 
-  Calendar, 
-  MapPin, 
-  ShieldCheck, 
-  ArrowRight, 
-  X,
-  Clock,
-  Package,
-  Share2
-} from 'lucide-react';
+import React, { useEffect } from 'react';
+import { X, Check, Share2, Receipt } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
-export default function BookingConfirmationModal({ 
-  confirmationData, 
-  onClose, 
-  onOpenReceipt, 
-  onGoToDashboard 
-}) {
-  const prasadSteps = [
-    { label: "Sankalpa Registered & Scheduled", desc: "Officiated by Vedic Priests", done: true, time: "Just now" },
-    { label: "Holy Chanting & Gotra Recitation", desc: "Live video stream recorded", done: true, time: "Assigned" },
-    { label: "Prasad Consecrated at Sanctum", desc: "Energized with Chandan & Bhasma", done: false, time: "Expected Soon" },
-    { label: "Sealed in Tamper-Proof Pouch", desc: "India Post Speed Sacred Post", done: false, time: "Within 24 hrs" },
-    { label: "Delivered to Devotee Doorstep", desc: "Safe home delivery with Gangajal", done: false, time: "In 3-4 days" }
+export default function BookingConfirmationModal({ confirmationData, onClose, onOpenReceipt, onGoToDashboard }) {
+  useEffect(() => {
+    if (confirmationData) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#7FA67A', '#C17F59', '#D94F30']
+      });
+    }
+  }, [confirmationData]);
+
+  if (!confirmationData) return null;
+
+  const steps = [
+    { id: 1, label: 'Booking Confirmed', date: 'Today', status: 'complete' },
+    { id: 2, label: 'Puja Scheduled', date: confirmationData.date || 'Pending', status: 'current' },
+    { id: 3, label: 'Puja Performed & Video Uploaded', date: 'Pending', status: 'pending' },
+    { id: 4, label: 'Prasad Dispatched', date: 'Pending', status: 'pending' },
+    { id: 5, label: 'Prasad Delivered', date: 'Pending', status: 'pending' }
   ];
 
-  const booking = confirmationData?.bookingData;
-
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-sanctum-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-sanctum-lg border border-gold-500/40 overflow-hidden flex flex-col max-h-[92vh]">
-        
-        {/* Divine Blessing Header */}
-        <div className="bg-gradient-to-r from-sanctum-950 via-sanctum-900 to-sanctum-950 text-white p-6 sm:p-8 text-center relative border-b border-gold-500/30">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-sanctum-950/80 border border-white/20 text-white hover:bg-sanctum-800 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <div className="fixed inset-0 bg-charcoal-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="relative max-w-lg w-full bg-ivory-50 rounded-3xl shadow-elevated p-8 animate-scale-in my-8">
+        <button onClick={onClose} className="absolute top-6 right-6 text-charcoal-500 hover:text-charcoal-900 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
 
-          {/* Glowing Divine Emblem */}
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-gold-400 via-gold-500 to-terracotta-600 p-0.5 shadow-gold-glow mb-4">
-            <div className="w-full h-full bg-sanctum-950 rounded-[22px] flex items-center justify-center">
-              <span className="text-gold-400 font-serif font-bold text-3xl">ॐ</span>
-            </div>
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-16 h-16 bg-sage-400 text-ivory-50 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-sage-400/30">
+            <Check className="w-8 h-8" />
           </div>
-
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tulsi-500/20 text-tulsi-300 border border-tulsi-500/40 text-xs font-semibold uppercase tracking-wider mb-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-tulsi-400" />
-            <span>Sankalpa Confirmed & Consecrated</span>
-          </div>
-
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold text-sandstone-50">
-            May the Divine Blessings Be With You
-          </h2>
-          <p className="text-xs sm:text-sm text-sandstone-300 mt-1">
-            Booking Reference ID: <strong className="font-mono text-gold-300">{confirmationData?.id || 'MV-2026-8942'}</strong>
-          </p>
+          <h2 className="text-3xl font-display text-charcoal-900 mb-2">Booking Confirmed!</h2>
+          <p className="text-charcoal-500 font-sans">May the blessings be with you.</p>
         </div>
 
-        {/* Scrollable Summary & Prasad Tracker */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          
-          {/* Seva & Officiation Card */}
-          <div className="p-4 rounded-2xl bg-sandstone-50 border border-sandstone-200 space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta-600">
-                  {booking?.service?.templeName || 'Shri Kashi Vishwanath Sanctum'}
-                </span>
-                <h4 className="text-lg font-serif font-bold text-sanctum-950 mt-0.5">
-                  {booking?.service?.title || 'Vedic Sankalpa Seva'}
-                </h4>
-              </div>
-              <span className="text-base font-serif font-bold text-sanctum-950 bg-white px-3 py-1 rounded-xl border border-sandstone-200">
-                ₹{(confirmationData?.amount || 1501).toLocaleString()}
-              </span>
+        <div className="bg-ivory-100 p-5 rounded-2xl border border-ivory-200 mb-8">
+          <div className="flex justify-between items-center border-b border-ivory-200 pb-3 mb-3">
+            <span className="text-charcoal-500 text-sm">Booking ID</span>
+            <span className="font-mono font-medium text-charcoal-900">{confirmationData.bookingId || 'BKG-XYZ123'}</span>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-charcoal-500 text-sm">Service</span>
+              <span className="font-medium text-charcoal-900">{confirmationData.serviceName}</span>
             </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs text-sandstone-700 pt-2 border-t border-sandstone-200">
-              <div>
-                <span className="text-sandstone-400 block">Officiating Date:</span>
-                <strong className="text-sanctum-950">{booking?.selectedDate || '14 Sept 2026 (Ekadashi)'}</strong>
-              </div>
-              <div>
-                <span className="text-sandstone-400 block">Participants & Gotra:</span>
-                <strong className="text-sanctum-950">{booking?.devotees?.[0] || 'Kaushal Singh (Kashyap)'}</strong>
-              </div>
+            <div className="flex justify-between">
+              <span className="text-charcoal-500 text-sm">Devotees</span>
+              <span className="font-medium text-charcoal-900">{confirmationData.devotees}</span>
             </div>
-
-            <div className="bg-tulsi-50 p-2.5 rounded-xl border border-tulsi-200 flex items-center gap-2 text-xs text-tulsi-800">
-              <Sparkles className="w-4 h-4 text-tulsi-600 shrink-0" />
-              <span>
-                Personalized live video stream link and WhatsApp updates will be sent 2 hours before the ritual.
-              </span>
+            <div className="flex justify-between">
+              <span className="text-charcoal-500 text-sm">Amount Paid</span>
+              <span className="font-mono font-medium text-charcoal-900">₹{confirmationData.amount}</span>
             </div>
           </div>
+        </div>
 
-          {/* DIGITAL PRASAD DELIVERY TRACKING TIMELINE */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Truck className="w-5 h-5 text-gold-600" />
-                <h4 className="font-serif font-bold text-base text-sanctum-950">
-                  Digital Prasad Delivery Tracker
-                </h4>
-              </div>
-              <span className="text-[11px] font-bold text-sandstone-500 font-mono">
-                Tracking: INDPOST-77382910IN
-              </span>
-            </div>
-
-            {/* Stepper Timeline */}
-            <div className="bg-sandstone-50 p-4 rounded-2xl border border-sandstone-200 space-y-3">
-              {prasadSteps.map((st, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      st.done 
-                        ? 'bg-tulsi-600 text-white shadow-sm' 
-                        : 'bg-sandstone-200 text-sandstone-600'
-                    }`}>
-                      {st.done ? '✓' : idx + 1}
-                    </div>
-                    {idx < prasadSteps.length - 1 && (
-                      <div className={`w-0.5 h-6 ${st.done ? 'bg-tulsi-500' : 'bg-sandstone-200'}`}></div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 -mt-0.5">
-                    <div className="flex items-center justify-between">
-                      <h5 className={`text-xs font-bold ${st.done ? 'text-sanctum-950' : 'text-sandstone-500'}`}>
-                        {st.label}
-                      </h5>
-                      <span className="text-[10px] text-sandstone-400 font-medium">{st.time}</span>
-                    </div>
-                    <p className="text-[11px] text-sandstone-500">{st.desc}</p>
-                  </div>
+        <div className="mb-8">
+          <h3 className="font-medium text-charcoal-900 mb-4">Prasad Delivery Timeline</h3>
+          <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[15px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-ivory-200 before:to-transparent">
+            {steps.map((step) => (
+              <div key={step.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active py-2">
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-ivory-50 bg-ivory-200 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 ${
+                  step.status === 'complete' ? 'bg-sage-400' : step.status === 'current' ? 'bg-copper-400 animate-pulse-slow' : 'bg-ivory-200'
+                }`}>
+                  {step.status === 'complete' && <Check className="w-3 h-3 text-white" />}
                 </div>
-              ))}
-            </div>
+                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded-xl border border-ivory-200 bg-ivory-50 shadow-sm">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className={`font-medium text-sm ${step.status === 'pending' ? 'text-charcoal-500' : 'text-charcoal-900'}`}>{step.label}</h4>
+                  </div>
+                  <time className="text-xs text-charcoal-500 font-mono">{step.date}</time>
+                </div>
+              </div>
+            ))}
           </div>
-
         </div>
 
-        {/* Footer Actions */}
-        <div className="bg-sandstone-100 p-5 sm:px-8 border-t border-sandstone-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <button
-            onClick={() => onOpenReceipt({
-              taxReceiptNo: confirmationData?.taxReceiptNo || 'MV-80G-2026-8942',
-              timestamp: confirmationData?.timestamp || '08 September 2026',
-              donorName: booking?.devotees?.[0]?.split(' ')[0] || 'Kaushal Singh',
-              gotra: 'Kashyap Gotra',
-              templeName: booking?.service?.templeName || 'Shri Kashi Vishwanath Sanctum',
-              serviceTitle: booking?.service?.title || 'Maha Rudrabhishek Seva',
-              amount: confirmationData?.amount || 1501
-            })}
-            className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white border border-sandstone-300 hover:border-gold-500 text-sanctum-950 font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all"
-          >
-            <FileText className="w-4 h-4 text-gold-600" />
-            <span>View & Print 80G Tax Receipt</span>
+        <div className="flex flex-col space-y-3">
+          <button onClick={onGoToDashboard} className="w-full bg-copper-400 text-ivory-50 py-3 rounded-xl font-medium shadow-copper-glow hover:bg-copper-500 transition-all hover:-translate-y-0.5">
+            Go to Dashboard
           </button>
-
-          <button
-            onClick={onGoToDashboard}
-            className="w-full sm:w-auto py-3 px-6 rounded-xl bg-sanctum-950 hover:bg-sanctum-900 text-gold-300 font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all"
-          >
-            <span>Go to Devotee Account</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex space-x-3">
+            <button onClick={onOpenReceipt} className="flex-1 flex items-center justify-center py-3 rounded-xl border border-copper-400 text-copper-600 font-medium hover:bg-copper-400/5 transition-all">
+              <Receipt className="w-4 h-4 mr-2" /> Receipt
+            </button>
+            <button className="flex-1 flex items-center justify-center py-3 rounded-xl border border-ivory-200 text-charcoal-700 font-medium hover:bg-ivory-100 transition-all">
+              <Share2 className="w-4 h-4 mr-2" /> Share Blessings
+            </button>
+          </div>
         </div>
-
       </div>
     </div>
   );

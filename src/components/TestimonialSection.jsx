@@ -1,127 +1,115 @@
-import React, { useState } from 'react';
-import { 
-  Star, 
-  ChevronLeft, 
-  ChevronRight, 
-  Quote, 
-  Video, 
-  CheckCircle2, 
-  Sparkles 
-} from 'lucide-react';
+import React, { useRef } from 'react';
+import { Star, Play, ChevronLeft, ChevronRight, BadgeCheck } from 'lucide-react';
 import { TESTIMONIALS } from '../data/mockData';
 
 export default function TestimonialSection() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollRef = useRef(null);
 
-  const prev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? TESTIMONIALS.length - 1 : prev - 1));
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const { current } = scrollRef;
+      const scrollAmount = direction === 'left' ? -400 : 400;
+      current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
   };
-
-  const next = () => {
-    setCurrentIndex((prev) => (prev === TESTIMONIALS.length - 1 ? 0 : prev + 1));
-  };
-
-  const item = TESTIMONIALS[currentIndex];
 
   return (
-    <section className="py-16 bg-sanctum-900 text-sandstone-50 border-b border-gold-500/20 relative overflow-hidden">
-      {/* Subtle background glow */}
-      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-gold-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gold-500/15 border border-gold-500/30 text-gold-300 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-gold-400" />
-            <span>Devotee Experiences</span>
+    <section className="py-16 lg:py-24 bg-charcoal-900 overflow-hidden relative">
+      <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/black-linen-2.png')] pointer-events-none"></div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+          <div className="max-w-2xl">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-temple-gold-400 mb-4">
+              What Devotees Say
+            </h2>
+            <p className="text-lg text-charcoal-300 font-sans">
+              Join thousands of families experiencing divine blessings through authentic spiritual services.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-sandstone-50">
-            Blessed Stories from 42+ Countries
-          </h2>
-          <p className="text-sandstone-300 text-sm mt-1">
-            Read firsthand accounts of divine connectivity, live sankalpa recordings, and sacred prasad unboxing.
-          </p>
+          
+          <div className="hidden md:flex items-center gap-3 mt-6 md:mt-0">
+            <button 
+              onClick={() => scroll('left')}
+              className="p-3 rounded-full border border-charcoal-700 text-ivory-200 hover:bg-charcoal-800 hover:text-temple-gold-400 transition-colors focus:ring-2 focus:ring-temple-gold-400/50"
+              aria-label="Previous Testimonial"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => scroll('right')}
+              className="p-3 rounded-full border border-charcoal-700 text-ivory-200 hover:bg-charcoal-800 hover:text-temple-gold-400 transition-colors focus:ring-2 focus:ring-temple-gold-400/50"
+              aria-label="Next Testimonial"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Carousel Card */}
-        <div className="bg-sanctum-950/80 border border-gold-500/30 rounded-3xl p-6 sm:p-10 shadow-sanctum-lg backdrop-blur-md relative">
-          
-          <Quote className="absolute top-6 right-6 w-14 h-14 text-gold-500/15" />
-
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            
-            {/* Avatar & Badges */}
-            <div className="flex flex-col items-center text-center shrink-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden p-1 bg-gradient-to-tr from-gold-500 to-terracotta-500 shadow-gold-glow">
-                <img 
-                  src={item.avatar} 
-                  alt={item.name}
-                  className="w-full h-full object-cover rounded-[14px]"
-                />
-              </div>
-
-              <div className="mt-3 flex items-center gap-1 text-gold-400">
-                {[...Array(item.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-gold-400" />
+        <div 
+          ref={scrollRef}
+          className="flex overflow-x-auto pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 gap-6 scrollbar-hide snap-x-mandatory"
+        >
+          {TESTIMONIALS.map((testimonial) => (
+            <div 
+              key={testimonial.id}
+              className="min-w-[320px] sm:min-w-[400px] w-[320px] sm:w-[400px] bg-ivory-100 rounded-2xl p-6 sm:p-8 shadow-warm snap-start flex flex-col hover:-translate-y-0.5 transition-transform duration-300"
+            >
+              <div className="flex items-center gap-1 mb-6">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-temple-gold-400 text-temple-gold-400" />
                 ))}
               </div>
-
-              {item.hasVideo && (
-                <div className="mt-2.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sanctum-900 border border-gold-500/40 text-[10px] text-gold-300 font-semibold cursor-pointer hover:bg-sanctum-850">
-                  <Video className="w-3 h-3 text-tulsi-400" />
-                  <span>Watch Video Sankalpa</span>
+              
+              <blockquote className="text-charcoal-800 font-sans italic text-lg leading-relaxed flex-1 mb-6">
+                "{testimonial.quote}"
+              </blockquote>
+              
+              <div className="flex items-center justify-between mt-auto pt-6 border-t border-ivory-200">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={testimonial.avatar || `https://i.pravatar.cc/150?u=${testimonial.id}`} 
+                    alt={testimonial.name}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-ivory-200"
+                  />
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-sans font-bold text-charcoal-900">{testimonial.name}</span>
+                      {testimonial.verified && (
+                        <BadgeCheck className="w-4 h-4 text-sage-500" title="Verified Devotee" />
+                      )}
+                    </div>
+                    <span className="text-xs text-charcoal-500 font-sans block">{testimonial.city}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-charcoal-400 font-semibold block mt-0.5">
+                      {testimonial.pujaName} • {testimonial.date}
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
-
-            {/* Testimonial Quote & Devotee details */}
-            <div className="flex-1 text-center md:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-500/10 text-gold-300 text-xs font-medium mb-3 border border-gold-500/20">
-                <CheckCircle2 className="w-3.5 h-3.5 text-tulsi-400" />
-                <span>Verified Booking: {item.pujaName}</span>
-              </div>
-
-              <p className="text-base sm:text-lg text-sandstone-100 font-serif italic leading-relaxed">
-                "{item.quote}"
-              </p>
-
-              <div className="mt-4 pt-4 border-t border-sanctum-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h4 className="font-serif font-bold text-base text-gold-300">
-                    {item.name}
-                  </h4>
-                  <p className="text-xs text-sandstone-400">
-                    {item.city} • Blessed on {item.date}
-                  </p>
-                </div>
-
-                {/* Navigation Arrows */}
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    onClick={prev}
-                    className="p-2 rounded-xl bg-sanctum-900 border border-gold-500/30 hover:border-gold-400 text-sandstone-200 hover:text-gold-300 transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
+                
+                {testimonial.hasVideo && (
+                  <button className="flex flex-col items-center gap-1 text-copper-600 hover:text-copper-700 transition-colors group">
+                    <div className="w-10 h-10 rounded-full bg-copper-100 flex items-center justify-center group-hover:bg-copper-200 transition-colors">
+                      <Play className="w-4 h-4 fill-current ml-0.5" />
+                    </div>
+                    <span className="text-[10px] font-semibold tracking-wide uppercase">Watch</span>
                   </button>
-                  <span className="text-xs text-sandstone-400 px-2 font-mono">
-                    {currentIndex + 1} / {TESTIMONIALS.length}
-                  </span>
-                  <button
-                    onClick={next}
-                    className="p-2 rounded-xl bg-sanctum-900 border border-gold-500/30 hover:border-gold-400 text-sandstone-200 hover:text-gold-300 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
+                )}
               </div>
-
             </div>
-
-          </div>
-
+          ))}
         </div>
-
+        
+        {/* Press/News Strip */}
+        <div className="mt-16 pt-12 border-t border-charcoal-800 flex flex-col items-center">
+          <span className="text-xs uppercase tracking-widest text-charcoal-500 mb-6 font-semibold">Featured In</span>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+            {/* Placeholder logos for press */}
+            <div className="text-xl font-display font-bold text-ivory-200">The Times of India</div>
+            <div className="text-xl font-display font-bold text-ivory-200">Hindustan Times</div>
+            <div className="text-xl font-display font-bold text-ivory-200">NDTV</div>
+            <div className="text-xl font-display font-bold text-ivory-200">Dainik Bhaskar</div>
+          </div>
+        </div>
       </div>
     </section>
   );

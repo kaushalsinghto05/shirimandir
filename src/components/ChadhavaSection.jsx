@@ -1,107 +1,108 @@
 import React from 'react';
-import { 
-  Flame, 
-  Sparkles, 
-  ArrowRight, 
-  HeartHandshake, 
-  ShieldCheck, 
-  Check 
-} from 'lucide-react';
-import { CHADHAVA_ITEMS } from '../data/mockData';
+import { Package, Plus } from 'lucide-react';
+import { CHADHAVA_ITEMS, AASHIRWAD_ADDONS } from '../data/mockData';
 
 export default function ChadhavaSection({ onOfferChadhava }) {
   return (
-    <section className="py-16 bg-white border-b border-sandstone-300/60" id="chadhava-section">
+    <section className="py-16 lg:py-24 bg-ivory-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-terracotta-100 border border-terracotta-500/30 text-terracotta-700 text-xs font-semibold uppercase tracking-wider mb-2">
-              <Flame className="w-3.5 h-3.5 text-terracotta-600" />
-              <span>Sacred Shringar & Gau Seva</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-sanctum-950">
-              Offer Divine Chadhava at Ancient Sanctums
-            </h2>
-            <p className="text-sm sm:text-base text-sandstone-700 mt-2 max-w-2xl">
-              Dedicate silver ornaments, holy vastra, flowers, or feed sacred cows in your family's gotra. Officiated during sanctum aartis with video proof.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-medium text-tulsi-700 bg-tulsi-50 px-3.5 py-2 rounded-xl border border-tulsi-500/20">
-            <ShieldCheck className="w-4 h-4 text-tulsi-600" />
-            <span>100% Guaranteed Sanctum Offering with Receipt</span>
-          </div>
+        <div className="mb-12 text-center">
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-charcoal-900 mb-4">
+            Sacred Chadhava & Prasadam
+          </h2>
+          <p className="text-lg text-charcoal-700 font-sans max-w-2xl mx-auto">
+            Offer holy items to the deity and receive blessed prasadam delivered straight to your home.
+          </p>
         </div>
 
-        {/* Chadhava Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {CHADHAVA_ITEMS.map((item) => {
-            return (
-              <div 
-                key={item.id}
-                className="bg-sandstone-50 rounded-3xl border border-sandstone-200 overflow-hidden hover:border-gold-500/50 hover:shadow-sanctum transition-all duration-300 flex flex-col group"
-              >
-                {/* Image */}
-                <div className="relative h-44 overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-16">
+          {CHADHAVA_ITEMS.map((item) => (
+            <div 
+              key={item.id}
+              className="bg-ivory-100 rounded-2xl shadow-warm hover:-translate-y-0.5 hover:shadow-warm-lg transition-all duration-300 p-6 sm:p-8 flex flex-col md:flex-row gap-6"
+            >
+              <div className="w-full md:w-2/5 shrink-0">
+                <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-sm relative">
                   <img 
-                    src={item.image} 
+                    src={item.image || `/images/chadhava-${item.id}.jpg`} 
                     alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1604514757626-4d05e81d7732?auto=format&fit=crop&w=400&q=80'; }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-sanctum-950/80 via-transparent to-transparent"></div>
-                  
-                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-sanctum-950/80 backdrop-blur-md text-gold-300 text-[10px] font-bold uppercase tracking-wider border border-gold-500/30">
-                    {item.category}
-                  </span>
-
-                  <div className="absolute bottom-2.5 left-3 right-3 text-white">
-                    <p className="text-[11px] text-gold-300 font-medium truncate">{item.templeName}</p>
-                  </div>
-                </div>
-
-                {/* Body */}
-                <div className="p-5 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-serif font-bold text-base text-sanctum-950 leading-snug group-hover:text-gold-700 transition-colors">
-                      {item.name}
-                    </h3>
-                    
-                    <p className="text-xs text-sandstone-600 mt-2 line-clamp-2">
-                      {item.desc}
-                    </p>
-
-                    <div className="mt-3 p-2.5 rounded-xl bg-white border border-sandstone-200/80 text-[11px] text-sandstone-700">
-                      <strong className="text-terracotta-600 block mb-0.5">Spiritual Merit:</strong>
-                      {item.significance}
+                  {item.hasDelivery && (
+                    <div className="absolute top-2 left-2 bg-ivory-50/90 backdrop-blur px-2.5 py-1 rounded-full flex items-center text-xs font-semibold text-charcoal-900 shadow-sm border border-ivory-200">
+                      <Package className="w-3.5 h-3.5 mr-1.5 text-copper-500" />
+                      Prasad Delivered
                     </div>
-                  </div>
-
-                  {/* Price & Action */}
-                  <div className="mt-5 pt-4 border-t border-sandstone-200 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] uppercase text-sandstone-400 block font-semibold">Seva Dakshina</span>
-                      <span className="text-xl font-serif font-bold text-sanctum-950">
-                        ₹{item.price.toLocaleString()}
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={() => onOfferChadhava(item)}
-                      className="py-2 px-3.5 rounded-xl bg-sanctum-950 hover:bg-gold-500 text-gold-300 hover:text-sanctum-950 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
-                    >
-                      <span>Offer Now</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
+                  )}
                 </div>
               </div>
-            );
-          })}
+              
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="text-xs font-bold text-copper-600 uppercase tracking-wider mb-1">
+                    {item.templeName} • {item.deity}
+                  </div>
+                  <h3 className="text-2xl font-display font-bold text-charcoal-900 mb-3">
+                    {item.name}
+                  </h3>
+                  <p className="text-sm text-charcoal-700 font-sans mb-4 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-between mt-auto">
+                  <div className="font-mono text-xl font-bold text-copper-500">
+                    ₹{item.price}
+                  </div>
+                  <button
+                    onClick={() => onOfferChadhava && onOfferChadhava(item)}
+                    className="py-2.5 px-6 border-2 border-copper-400 text-copper-600 hover:bg-copper-400 hover:text-ivory-50 font-sans font-semibold rounded-xl transition-all duration-300 focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2 active:translate-y-0"
+                  >
+                    Offer Chadhava
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
+        <div className="border-t border-ivory-200 pt-12">
+          <div className="mb-6 flex items-center justify-between">
+            <h3 className="text-xl font-display font-bold text-charcoal-900">
+              Aashirwad Add-ons
+            </h3>
+            <span className="text-sm font-sans text-charcoal-500">Enhance your offering</span>
+          </div>
+          
+          <div className="flex overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 gap-4 scrollbar-hide snap-x-mandatory">
+            {AASHIRWAD_ADDONS.map((addon) => (
+              <div 
+                key={addon.id}
+                className="min-w-[200px] bg-ivory-100 rounded-xl shadow-warm border border-ivory-200/50 p-4 flex flex-col snap-start hover:border-copper-300 transition-colors"
+              >
+                <div className="h-24 w-full rounded-lg overflow-hidden mb-3 bg-ivory-200">
+                  <img 
+                    src={addon.image || `/images/addon-${addon.id}.jpg`} 
+                    alt={addon.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1599839619722-39751411ea63?auto=format&fit=crop&w=200&q=80'; }}
+                  />
+                </div>
+                <h4 className="font-sans font-semibold text-charcoal-900 text-sm mb-1 leading-tight">{addon.name}</h4>
+                <div className="mt-auto flex items-center justify-between pt-3">
+                  <span className="font-mono text-sm font-bold text-copper-500">₹{addon.price}</span>
+                  <button 
+                    className="p-1.5 rounded-full bg-ivory-200 text-charcoal-700 hover:bg-copper-100 hover:text-copper-600 transition-colors"
+                    title="Add to offering"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

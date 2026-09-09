@@ -1,173 +1,125 @@
-import React, { useState } from 'react';
-import { X, Compass, Stars, Sun, Clock, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
+import React from 'react';
+import { X, Sparkles, Moon, Sun, Star } from 'lucide-react';
 import { ASTRO_TOOLS } from '../data/mockData';
 
 export default function AstroToolsModal({ isOpen, onClose }) {
-  const [activeTool, setActiveTool] = useState('kundli-milan');
-  const [boyName, setBoyName] = useState('Rahul');
-  const [girlName, setGirlName] = useState('Ananya');
-  const [milanCalculated, setMilanCalculated] = useState(false);
+  const isModal = isOpen !== undefined;
+  if (isModal && !isOpen) return null;
 
-  if (!isOpen) return null;
+  const ICONS = {
+    'Daily Horoscope': Sun,
+    'Panchang': Moon,
+    'Matchmaking': Star,
+    'Numerology': Sparkles
+  };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-sanctum-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
-      <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-sanctum-lg border border-gold-500/30 overflow-hidden flex flex-col max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="bg-sanctum-950 text-white p-6 border-b border-gold-500/30 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400">
-              <Compass className="w-5 h-5" />
+  const Content = () => (
+    <div className={`w-full max-w-7xl mx-auto ${isModal ? 'p-6 sm:p-8' : 'px-4 sm:px-6 lg:px-8 py-16 lg:py-24'}`}>
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-4xl font-display text-charcoal-900 mb-4">Vedic Astro Tools & AI Kundli</h2>
+        <p className="text-charcoal-500 max-w-2xl mx-auto">Discover cosmic insights and guidance through ancient Vedic wisdom combined with modern precision.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div className="lg:col-span-2 bg-ivory-50 border border-ivory-200 rounded-3xl p-6 md:p-8 shadow-warm">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-copper-400/10 text-copper-600 rounded-xl flex items-center justify-center mr-4">
+              <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-lg text-white">Vedic Jyotish & Astro Tools</h3>
-              <p className="text-xs text-sandstone-300">Kundli Milan, Sade Sati & Muhurta Calculations</p>
+              <h3 className="text-2xl font-display text-charcoal-900">AI Kundli Generator</h3>
+              <p className="text-charcoal-500 text-sm">Generate detailed birth charts instantly</p>
             </div>
           </div>
-
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-sanctum-900 border border-white/20 text-white hover:bg-sanctum-850"
-          >
-            <X className="w-4 h-4" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-charcoal-700 mb-1">Birth Date</label>
+              <input type="date" className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal-700 mb-1">Birth Time</label>
+              <input type="time" className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal-700 mb-1">Birth Place</label>
+              <input type="text" placeholder="e.g. New Delhi" className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+            </div>
+          </div>
+          <button className="w-full sm:w-auto px-8 py-3 bg-copper-400 text-ivory-50 rounded-xl font-medium shadow-copper-glow hover:bg-copper-500 transition-all hover:-translate-y-0.5">
+            Generate Kundli
           </button>
         </div>
 
-        {/* Tool Nav Pills */}
-        <div className="bg-sandstone-100 p-3 border-b border-sandstone-200 flex flex-wrap gap-2">
-          {ASTRO_TOOLS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setActiveTool(t.id);
-                setMilanCalculated(false);
-              }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                activeTool === t.id
-                  ? 'bg-sanctum-950 text-gold-300 shadow-sm'
-                  : 'bg-white text-sandstone-700 hover:bg-sandstone-200'
-              }`}
-            >
-              {t.name.split(' (')[0]}
-            </button>
+        <div className="bg-charcoal-900 text-ivory-50 rounded-3xl p-6 md:p-8 shadow-dark flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-display mb-2">Book Live Vedic Consultant</h3>
+            <p className="text-ivory-200 text-sm mb-6">Connect with expert astrologers for personalized guidance.</p>
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {['Today 4 PM', 'Today 6 PM', 'Tomorrow 10 AM', 'Tomorrow 2 PM'].map(slot => (
+                <button key={slot} className="py-2 px-3 border border-charcoal-700 rounded-lg text-sm text-ivory-100 hover:border-copper-400 hover:text-copper-400 transition-colors">
+                  {slot}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button className="w-full py-3 bg-copper-400 text-ivory-50 rounded-xl font-medium hover:bg-copper-500 transition-all">
+            Book Consultation <span className="font-mono ml-2">₹501</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {(ASTRO_TOOLS || [
+          { name: 'Daily Horoscope', description: 'Read your personalized daily reading based on moon sign.' },
+          { name: 'Panchang', description: 'Daily Hindu calendar for auspicious timings and tithis.' },
+          { name: 'Matchmaking', description: 'Vedic Kundli matching for marriage and relationships.' },
+          { name: 'Numerology', description: 'Discover the power of your numbers and life path.' }
+        ]).map((tool, idx) => {
+          const Icon = ICONS[tool.name] || Sparkles;
+          return (
+            <div key={idx} className="bg-ivory-50 border border-ivory-200 p-6 rounded-2xl hover:border-copper-400/50 hover:shadow-warm transition-all hover:-translate-y-0.5">
+              <div className="w-10 h-10 bg-ivory-100 text-copper-500 rounded-lg flex items-center justify-center mb-4">
+                <Icon className="w-5 h-5" />
+              </div>
+              <h4 className="font-medium text-charcoal-900 mb-2">{tool.name}</h4>
+              <p className="text-sm text-charcoal-500 mb-4">{tool.description}</p>
+              <button className="text-copper-600 font-medium text-sm hover:text-copper-700 transition-colors">Open {tool.name} →</button>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="overflow-x-auto scrollbar-hide pb-4">
+        <div className="flex space-x-6 min-w-max px-2">
+          {['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'].map((sign, i) => (
+            <div key={sign} className="flex flex-col items-center group cursor-pointer">
+              <div className="w-14 h-14 rounded-full bg-ivory-100 border border-ivory-200 flex items-center justify-center mb-2 group-hover:border-copper-400 group-hover:bg-copper-400/5 transition-all">
+                <span className="text-xl">{['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'][i]}</span>
+              </div>
+              <span className="text-xs font-medium text-charcoal-700 group-hover:text-copper-600 transition-colors">{sign}</span>
+            </div>
           ))}
         </div>
-
-        {/* Tool Workspace Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          
-          {activeTool === 'kundli-milan' && (
-            <div className="space-y-5">
-              <div>
-                <h4 className="font-serif font-bold text-base text-sanctum-950">Vedic Ashta Koota Kundli Milan</h4>
-                <p className="text-xs text-sandstone-600">Calculates the 36 Gunas based on Nakshatra and Moon placement.</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-sandstone-50 border border-sandstone-200">
-                  <span className="text-xs font-bold text-sandstone-700 block mb-2 uppercase">Boy's Birth Details</span>
-                  <input
-                    type="text"
-                    value={boyName}
-                    onChange={(e) => setBoyName(e.target.value)}
-                    placeholder="Full Name"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-sandstone-300 bg-white mb-2"
-                  />
-                  <select className="w-full px-3 py-2 text-xs rounded-xl border border-sandstone-300 bg-white">
-                    <option>Rohini Nakshatra (Vrishabha Rashi)</option>
-                    <option>Pushya Nakshatra (Karka Rashi)</option>
-                    <option>Uttara Phalguni (Simha Rashi)</option>
-                  </select>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-sandstone-50 border border-sandstone-200">
-                  <span className="text-xs font-bold text-sandstone-700 block mb-2 uppercase">Girl's Birth Details</span>
-                  <input
-                    type="text"
-                    value={girlName}
-                    onChange={(e) => setGirlName(e.target.value)}
-                    placeholder="Full Name"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-sandstone-300 bg-white mb-2"
-                  />
-                  <select className="w-full px-3 py-2 text-xs rounded-xl border border-sandstone-300 bg-white">
-                    <option>Mrigashira Nakshatra (Mithuna Rashi)</option>
-                    <option>Swati Nakshatra (Tula Rashi)</option>
-                    <option>Revati Nakshatra (Meena Rashi)</option>
-                  </select>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setMilanCalculated(true)}
-                className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-400 text-sanctum-950 font-bold text-xs shadow-gold-glow flex items-center justify-center gap-1.5 transition-all"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Calculate 36 Guna Milan & Manglik Dosh</span>
-              </button>
-
-              {milanCalculated && (
-                <div className="p-5 rounded-2xl bg-tulsi-50 border border-tulsi-200 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs text-tulsi-800 font-bold uppercase tracking-wide">Compatibility Score:</span>
-                      <h5 className="text-2xl font-serif font-bold text-tulsi-950">29.5 / 36 Gunas Matched</h5>
-                    </div>
-                    <span className="px-3 py-1 bg-tulsi-600 text-white rounded-full text-xs font-bold">
-                      Auspicious Match (Uttam)
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] pt-2 border-t border-tulsi-200 text-tulsi-900">
-                    <div>Varna: <strong>1/1</strong></div>
-                    <div>Vashya: <strong>2/2</strong></div>
-                    <div>Tara: <strong>3/3</strong></div>
-                    <div>Yoni: <strong>3/4</strong></div>
-                    <div>Graha Maitri: <strong>5/5</strong></div>
-                    <div>Gana: <strong>5/6</strong></div>
-                    <div>Bhakoot: <strong>7/7</strong></div>
-                    <div>Nadi: <strong>8/8 (No Nadi Dosh)</strong></div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTool === 'sade-sati' && (
-            <div className="space-y-4">
-              <h4 className="font-serif font-bold text-base text-sanctum-950">Shani Sade Sati & Dhaiya Phase Checker</h4>
-              <p className="text-xs text-sandstone-600">Select your Moon Sign (Rashi) to discover current Saturn transit impact and recommended temple remedies.</p>
-
-              <div className="p-4 rounded-2xl bg-sandstone-50 border border-sandstone-200">
-                <label className="block text-xs font-bold text-sandstone-700 uppercase mb-2">Select Your Rashi</label>
-                <select className="w-full px-3 py-2 text-xs rounded-xl border border-sandstone-300 bg-white">
-                  <option>Kumbha (Aquarius) — Peak (2nd Phase)</option>
-                  <option>Meena (Pisces) — Rising (1st Phase)</option>
-                  <option>Makara (Capricorn) — Setting (3rd Phase)</option>
-                  <option>Vrishchik (Scorpio) — Kantaka Shani</option>
-                  <option>Karka (Cancer) — Ashtama Shani</option>
-                </select>
-
-                <div className="mt-4 p-3.5 bg-white rounded-xl border border-sandstone-200 text-xs space-y-1 text-sandstone-700">
-                  <p><strong>Current Phase:</strong> Shani Transit over Kumbha Rashi.</p>
-                  <p><strong>Remedy Recommended:</strong> Taila Abhishek at Shani Shingnapur or Hanuman Chalisa chanting at Mahakaleshwar Jyotirlinga.</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTool !== 'kundli-milan' && activeTool !== 'sade-sati' && (
-            <div className="p-6 text-center bg-sandstone-50 rounded-2xl border border-sandstone-200">
-              <Sun className="w-8 h-8 text-gold-600 mx-auto mb-2" />
-              <h5 className="font-serif font-bold text-sm text-sanctum-950">Vedic Choghadiya & Muhurta Calculator</h5>
-              <p className="text-xs text-sandstone-600 mt-1">Live calculations calibrated to your current sunrise and location coordinates.</p>
-            </div>
-          )}
-
-        </div>
-
       </div>
     </div>
+  );
+
+  if (isModal) {
+    return (
+      <div className="fixed inset-0 bg-charcoal-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="relative max-w-5xl w-full bg-ivory-50 rounded-3xl shadow-elevated animate-scale-in my-8 max-h-[90vh] overflow-y-auto scrollbar-hide">
+          <button onClick={onClose} className="absolute top-6 right-6 text-charcoal-500 hover:text-charcoal-900 transition-colors z-10 bg-ivory-100 rounded-full p-2">
+            <X className="w-5 h-5" />
+          </button>
+          <Content />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <section className="bg-ivory-100/50">
+      <Content />
+    </section>
   );
 }

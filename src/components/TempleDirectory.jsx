@@ -1,231 +1,134 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Heart, 
-  MapPin, 
-  Clock, 
-  Sparkles, 
-  Radio, 
-  ShieldCheck, 
-  ArrowRight,
-  Star,
-  Users
-} from 'lucide-react';
-import { TEMPLES } from '../data/mockData';
+import { Search, MapPin, Star, Heart, ShieldCheck, Clock } from 'lucide-react';
 
-export default function TempleDirectory({ 
-  temples = TEMPLES,
-  onSelectTemple, 
-  wishlist, 
-  onToggleWishlist 
-}) {
+export default function TempleDirectory({ temples, onSelectTemple, wishlist, onToggleWishlist }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedState, setSelectedState] = useState('All');
-  const [selectedDeity, setSelectedDeity] = useState('All');
-  const [filterLiveDarshanOnly, setFilterLiveDarshanOnly] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('All');
 
-  const states = ['All', 'Uttar Pradesh', 'Madhya Pradesh', 'Uttarakhand', 'Andhra Pradesh', 'Assam'];
-  const deities = ['All', 'Lord Shiva', 'Lord Rama', 'Lord Venkateswara', 'Goddess Kamakhya'];
+  const filters = ['All', 'Uttar Pradesh', 'Madhya Pradesh', 'Uttarakhand', 'Andhra Pradesh', 'Assam'];
 
-  const filteredTemples = temples.filter((temple) => {
-    const matchesSearch = 
-      temple.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      temple.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      temple.deity.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesState = selectedState === 'All' || temple.state === selectedState;
-    const matchesDeity = selectedDeity === 'All' || temple.deity.toLowerCase().includes(selectedDeity.toLowerCase());
-    const matchesLive = !filterLiveDarshanOnly || temple.hasLiveDarshan;
-
-    return matchesSearch && matchesState && matchesDeity && matchesLive;
+  const filteredTemples = temples?.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          t.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          t.deity?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === 'All' || t.location.includes(activeFilter);
+    return matchesSearch && matchesFilter;
   });
 
+  const getWaitTimeColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'low': return 'bg-sage-400 text-ivory-50';
+      case 'medium': return 'bg-temple-gold-400 text-charcoal-900';
+      case 'high': return 'bg-vermilion-500 text-ivory-50';
+      default: return 'bg-charcoal-200 text-charcoal-700';
+    }
+  };
+
   return (
-    <div className="py-12 bg-sandstone-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+      <div className="mb-12">
+        <h2 className="font-display text-4xl font-bold text-charcoal-900 mb-6 text-center">Explore Sacred Temples</h2>
         
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-500/15 border border-gold-500/30 text-gold-700 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-gold-600" />
-            <span>Sacred Geography</span>
+        <div className="max-w-2xl mx-auto relative mb-8">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-charcoal-500" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-sanctum-950">
-            Ancient Temple Directory & Sanctums
-          </h1>
-          <p className="text-sm sm:text-base text-sandstone-700 mt-1 max-w-2xl">
-            Explore 500+ verified Devasthanams across India. Check live darshan queues, daily aarti schedules, and book authentic sevas.
-          </p>
+          <input
+            type="text"
+            className="block w-full pl-11 pr-4 py-4 bg-ivory-100 border-none rounded-2xl shadow-warm focus:ring-2 focus:ring-copper-400/50 text-charcoal-900 font-sans transition-all duration-300"
+            placeholder="Search temples, cities, deities..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
 
-        {/* Search & Filter Toolbar */}
-        <div className="bg-white p-5 rounded-3xl border border-sandstone-200 shadow-sm mb-8 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            
-            {/* Search Input */}
-            <div className="flex-1 relative">
-              <Search className="w-5 h-5 text-sandstone-400 absolute left-4 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by temple name (e.g. Kashi, Kedarnath), deity, or city..."
-                className="w-full pl-12 pr-4 py-3 rounded-2xl bg-sandstone-50 border border-sandstone-200 text-sm focus:outline-none focus:border-gold-500 focus:bg-white transition-colors"
-              />
-            </div>
-
-            {/* State Filter */}
-            <select
-              value={selectedState}
-              onChange={(e) => setSelectedState(e.target.value)}
-              className="px-4 py-3 rounded-2xl bg-sandstone-50 border border-sandstone-200 text-sm text-sandstone-800 focus:outline-none focus:border-gold-500"
-            >
-              <option value="All">All States (India)</option>
-              {states.filter(s => s !== 'All').map(st => (
-                <option key={st} value={st}>{st}</option>
-              ))}
-            </select>
-
-            {/* Deity Filter */}
-            <select
-              value={selectedDeity}
-              onChange={(e) => setSelectedDeity(e.target.value)}
-              className="px-4 py-3 rounded-2xl bg-sandstone-50 border border-sandstone-200 text-sm text-sandstone-800 focus:outline-none focus:border-gold-500"
-            >
-              <option value="All">All Deities</option>
-              {deities.filter(d => d !== 'All').map(dt => (
-                <option key={dt} value={dt}>{dt}</option>
-              ))}
-            </select>
-
-            {/* Live Darshan Toggle */}
+        <div className="flex flex-wrap justify-center gap-3">
+          {filters.map(filter => (
             <button
-              onClick={() => setFilterLiveDarshanOnly(!filterLiveDarshanOnly)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-xs font-semibold border transition-all ${
-                filterLiveDarshanOnly
-                  ? 'bg-tulsi-50 border-tulsi-500 text-tulsi-700 shadow-sm'
-                  : 'bg-sandstone-50 border-sandstone-200 text-sandstone-700 hover:bg-sandstone-100'
-              }`}
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-5 py-2 rounded-full font-sans text-sm transition-all duration-300 ${activeFilter === filter ? 'bg-copper-400 text-ivory-50 shadow-copper-glow' : 'bg-ivory-100 text-charcoal-700 hover:bg-ivory-200'}`}
             >
-              <Radio className={`w-4 h-4 ${filterLiveDarshanOnly ? 'text-tulsi-600' : 'text-sandstone-400'}`} />
-              <span>Live Darshan Active</span>
+              {filter}
             </button>
-
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-sandstone-500 pt-2 border-t border-sandstone-100">
-            <span>Showing <strong>{filteredTemples.length}</strong> sanctums found</span>
-            <span className="text-gold-700 font-medium">Click on any temple to view Live Darshan & Timings</span>
-          </div>
+          ))}
         </div>
+      </div>
 
-        {/* Temples Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTemples.map((temple) => {
-            const isWishlisted = wishlist.includes(temple.id);
-
-            return (
-              <div
-                key={temple.id}
-                onClick={() => onSelectTemple(temple)}
-                className="bg-white rounded-3xl border border-sandstone-200 overflow-hidden shadow-sanctum hover:shadow-sanctum-lg transition-all duration-300 flex flex-col cursor-pointer group"
-              >
-                {/* Image Cover */}
-                <div className="relative h-52 overflow-hidden">
-                  <img
-                    src={temple.image}
-                    alt={temple.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-sanctum-950/90 via-sanctum-950/20 to-transparent"></div>
-
-                  {/* Top Pill Badges */}
-                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sanctum-950/80 backdrop-blur-md border border-tulsi-500/50 text-white text-[11px] font-semibold">
-                      <span className="flex h-2 w-2 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tulsi-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-tulsi-500"></span>
-                      </span>
-                      <span>🟢 ~{temple.waitMinutes} min queue</span>
-                    </span>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleWishlist(temple.id);
-                      }}
-                      className="p-2 rounded-full bg-sanctum-950/70 backdrop-blur-md border border-white/20 text-white hover:text-terracotta-400 transition-colors"
-                    >
-                      <Heart className={`w-4 h-4 ${isWishlisted ? 'text-terracotta-500 fill-terracotta-500' : ''}`} />
-                    </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredTemples?.map(temple => {
+          const isWishlisted = wishlist && wishlist.includes(temple.id);
+          
+          return (
+            <div key={temple.id} className="bg-ivory-100 rounded-2xl shadow-warm overflow-hidden hover:-translate-y-0.5 hover:shadow-warm-lg transition-all duration-300 flex flex-col">
+              <div className="relative h-48 w-full cursor-pointer" onClick={() => onSelectTemple(temple)}>
+                <img src={temple.imageUrl || '/images/placeholder.jpg'} alt={temple.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 to-transparent"></div>
+                
+                {temple.trustBadge && (
+                  <div className="absolute top-4 left-4 bg-sage-400/90 backdrop-blur-sm text-ivory-50 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                    <ShieldCheck className="w-3 h-3" />
+                    Verified
                   </div>
-
-                  {/* Title and Deity */}
-                  <div className="absolute bottom-3 left-4 right-4 text-white">
-                    <span className="text-xs font-semibold text-gold-300 tracking-wide block">
-                      {temple.deity}
-                    </span>
-                    <h3 className="text-lg font-serif font-bold text-white group-hover:text-gold-300 transition-colors truncate">
-                      {temple.name}
-                    </h3>
-                    <p className="text-xs text-sandstone-300 flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3.5 h-3.5 text-gold-400" />
-                      <span>{temple.location}</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Body Details */}
-                <div className="p-5 flex-1 flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <p className="text-xs text-sandstone-600 line-clamp-2">
-                      {temple.tagline}
-                    </p>
-
-                    {/* Stats bar */}
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                      <div className="p-2 bg-sandstone-50 rounded-xl border border-sandstone-200">
-                        <span className="text-[10px] text-sandstone-500 block">Devotee Rating</span>
-                        <span className="font-bold text-sanctum-900 flex items-center gap-1">
-                          <Star className="w-3.5 h-3.5 fill-gold-500 text-gold-500" />
-                          <span>{temple.rating} ({temple.reviewCount.toLocaleString()})</span>
-                        </span>
-                      </div>
-
-                      <div className="p-2 bg-sandstone-50 rounded-xl border border-sandstone-200">
-                        <span className="text-[10px] text-sandstone-500 block">Devotees Following</span>
-                        <span className="font-bold text-sanctum-900 flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5 text-sanctum-700" />
-                          <span>{(temple.followersCount / 1000).toFixed(0)}k Sevaks</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Available Sevas Count */}
-                    <div className="flex items-center justify-between text-xs text-tulsi-700 font-medium pt-1">
-                      <span className="flex items-center gap-1">
-                        <ShieldCheck className="w-3.5 h-3.5 text-tulsi-600" />
-                        <span>{temple.availableSevas.length} Sevas Available</span>
-                      </span>
-                      <span className="text-terracotta-600 font-semibold">
-                        80G Tax Exempt
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Action Link */}
-                  <div className="mt-5 pt-4 border-t border-sandstone-100 flex items-center justify-between text-xs font-bold text-sanctum-950 group-hover:text-gold-700">
-                    <span>Explore Temple & Timings</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                )}
+                
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onToggleWishlist(temple.id); }}
+                  className="absolute top-4 right-4 bg-charcoal-900/40 hover:bg-charcoal-900/60 p-2 rounded-full transition-all duration-300 backdrop-blur-sm"
+                >
+                  <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-vermilion-500 text-vermilion-500' : 'text-ivory-50'}`} />
+                </button>
+                
+                <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                  <div className="text-ivory-50">
+                    <h3 className="font-display text-xl font-bold">{temple.name}</h3>
+                    <p className="font-sans text-sm text-ivory-200">{temple.deity}</p>
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
+              
+              <div className="p-5 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center text-charcoal-500 text-sm">
+                      <MapPin className="w-4 h-4 mr-1 text-copper-500" />
+                      {temple.location}
+                    </div>
+                    <div className="flex items-center text-sm font-semibold text-charcoal-900">
+                      <Star className="w-4 h-4 text-temple-gold-500 fill-temple-gold-500 mr-1" />
+                      {temple.rating} <span className="text-charcoal-500 font-normal ml-1">({temple.reviews})</span>
+                    </div>
+                  </div>
+                  
+                  {temple.waitTime && (
+                    <div className="mb-5 flex items-center gap-2">
+                      <span className="text-xs text-charcoal-500 font-sans flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> Wait Time:
+                      </span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getWaitTimeColor(temple.waitTimeStatus)}`}>
+                        {temple.waitTime}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <button 
+                  onClick={() => onSelectTemple(temple)}
+                  className="w-full border-2 border-copper-400 text-copper-600 hover:bg-copper-400 hover:text-ivory-50 py-2.5 rounded-xl font-medium transition-all duration-300 focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2"
+                >
+                  View Temple
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
+      
+      {filteredTemples?.length === 0 && (
+        <div className="text-center py-20">
+          <p className="text-charcoal-500 text-lg">No temples found matching your criteria.</p>
+        </div>
+      )}
     </div>
   );
 }

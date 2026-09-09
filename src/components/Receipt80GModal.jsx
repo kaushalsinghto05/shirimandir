@@ -1,130 +1,90 @@
 import React from 'react';
-import { X, Printer, Download, ShieldCheck } from 'lucide-react';
+import { X, Download, Printer } from 'lucide-react';
 
 export default function Receipt80GModal({ receiptData, onClose }) {
+  if (!receiptData) return null;
+
   const handlePrint = () => {
     window.print();
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-sanctum-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 no-print">
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-sanctum-lg border border-gold-500/40 overflow-hidden flex flex-col">
-        
-        {/* Top Actions Bar (Hidden during print) */}
-        <div className="bg-sanctum-950 text-white px-6 py-4 flex items-center justify-between no-print border-b border-gold-500/30">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-tulsi-400" />
-            <span className="font-serif font-bold text-sm tracking-wide text-sandstone-50">
-              Form 10BE / 80G Tax Exemption Donation Certificate
-            </span>
-          </div>
+    <div className="fixed inset-0 bg-charcoal-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl w-full max-w-xl shadow-elevated relative animate-scale-in flex flex-col max-h-[90vh]">
+        <button onClick={onClose} className="absolute top-4 right-4 text-charcoal-500 hover:text-charcoal-900 bg-ivory-100 hover:bg-ivory-200 p-2 rounded-full transition-all duration-300 z-10">
+          <X className="w-5 h-5" />
+        </button>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePrint}
-              className="px-3 py-1.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-sanctum-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print / Save PDF</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-full bg-sanctum-900 text-sandstone-300 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Printable Official Receipt Body */}
-        <div id="printable-receipt" className="p-8 sm:p-10 bg-[#FFFEFA] text-sanctum-950 font-sans border-8 border-double border-gold-500/30 m-4 rounded-2xl">
-          
+        <div className="overflow-y-auto p-8" id="printable-receipt">
           {/* Header */}
-          <div className="text-center pb-6 border-b-2 border-sanctum-950">
-            <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-sanctum-950 flex items-center justify-center text-gold-400 font-serif font-bold text-2xl border-2 border-gold-500">
-              ॐ
+          <div className="text-center mb-8 border-b-2 border-copper-200 pb-6">
+            <h2 className="font-display text-3xl font-bold text-copper-600 mb-1">Shiri Mandir</h2>
+            <p className="font-sans text-sm text-charcoal-500">Sacred Connections, Verified Trust</p>
+            <h3 className="font-sans text-lg font-bold text-charcoal-900 mt-4 uppercase tracking-wider">80G Tax Exemption Donation Receipt</h3>
+          </div>
+
+          {/* Receipt Details */}
+          <div className="space-y-4 font-sans text-charcoal-700">
+            <div className="flex justify-between border-b border-ivory-200 pb-2">
+              <span className="font-semibold">Receipt No:</span>
+              <span>{receiptData.receiptNo}</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-sanctum-950 uppercase tracking-wide">
-              MandirVeda Devasthanam Trust
-            </h2>
-            <p className="text-xs text-sandstone-700 mt-1">
-              Registered Under Indian Public Charitable Trust Act • NITI Aayog Darpan: UP/2023/038921
+            <div className="flex justify-between border-b border-ivory-200 pb-2">
+              <span className="font-semibold">Date:</span>
+              <span>{receiptData.date}</span>
+            </div>
+            <div className="flex justify-between border-b border-ivory-200 pb-2">
+              <span className="font-semibold">Donor Name:</span>
+              <span>{receiptData.donorName}</span>
+            </div>
+            <div className="flex justify-between border-b border-ivory-200 pb-2">
+              <span className="font-semibold">PAN Number:</span>
+              <span className="uppercase">{receiptData.pan}</span>
+            </div>
+            <div className="flex justify-between border-b border-ivory-200 pb-2">
+              <span className="font-semibold">Temple:</span>
+              <span>{receiptData.temple}</span>
+            </div>
+            <div className="flex justify-between border-b border-ivory-200 pb-2">
+              <span className="font-semibold">Service:</span>
+              <span>{receiptData.service}</span>
+            </div>
+            <div className="flex justify-between border-b border-ivory-200 pb-2 text-lg">
+              <span className="font-bold text-charcoal-900">Donation Amount:</span>
+              <span className="font-mono font-bold text-copper-600">₹{receiptData.amount}</span>
+            </div>
+          </div>
+
+          <div className="mt-8 bg-sage-50 border border-sage-200 p-4 rounded-xl text-center">
+            <p className="text-sage-700 text-sm font-medium">
+              This donation is eligible for 50% tax exemption under Section 80G of Income Tax Act, 1961.
             </p>
-            <p className="text-xs font-semibold text-terracotta-700 mt-1">
-              Income Tax Act 1961 - Section 80G (5)(vi) Approval No: CIT(E)/LKO/80G/2021-22/A/10492
-            </p>
           </div>
-
-          {/* Receipt Meta */}
-          <div className="grid grid-cols-2 gap-4 py-4 text-xs border-b border-sandstone-200">
-            <div>
-              <span className="text-sandstone-500 block">Certificate / Receipt No:</span>
-              <strong className="font-mono text-sm text-sanctum-950">{receiptData?.taxReceiptNo || 'MV-80G-2026-8942'}</strong>
-            </div>
-            <div className="text-right">
-              <span className="text-sandstone-500 block">Date of Issuance:</span>
-              <strong className="text-sanctum-950">{receiptData?.timestamp || '08 September 2026'}</strong>
+          
+          <div className="mt-8 flex justify-center">
+            <div className="w-24 h-24 bg-ivory-100 border border-ivory-200 rounded-lg flex items-center justify-center">
+              <span className="text-xs text-charcoal-400">QR Code</span>
             </div>
           </div>
-
-          {/* Donor & Seva Details */}
-          <div className="py-5 space-y-3 text-xs border-b border-sandstone-200">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="text-sandstone-500 block">Devotee Donor Name:</span>
-                <strong className="text-sm font-serif text-sanctum-950">{receiptData?.donorName || 'Kaushal Singh'}</strong>
-              </div>
-              <div>
-                <span className="text-sandstone-500 block">Devotee Gotra:</span>
-                <strong className="text-sanctum-950">{receiptData?.gotra || 'Kashyap Gotra'}</strong>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="text-sandstone-500 block">Temple / Sanctum:</span>
-                <strong className="text-sanctum-950">{receiptData?.templeName || 'Shri Kashi Vishwanath Temple, Varanasi'}</strong>
-              </div>
-              <div>
-                <span className="text-sandstone-500 block">Seva / Religious Purpose:</span>
-                <strong className="text-sanctum-950">{receiptData?.serviceTitle || 'Maha Rudrabhishek & Vedic Sankalpa'}</strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Amount Breakdown */}
-          <div className="py-5 border-b-2 border-sanctum-950">
-            <div className="flex items-center justify-between text-sm py-1">
-              <span className="font-medium text-sandstone-700">Seva Dakshina & Sacred Offering Contribution:</span>
-              <span className="font-mono font-bold text-sanctum-950">₹{(receiptData?.amount || 1501).toLocaleString()}.00</span>
-            </div>
-            <div className="flex items-center justify-between text-xs py-1 text-sandstone-600">
-              <span>Temple Annadanam & Maintenance Corpus Fund:</span>
-              <span className="font-mono">Included</span>
-            </div>
-            <div className="flex items-center justify-between text-base font-serif font-bold py-2 mt-2 bg-sandstone-100 px-3 rounded-lg border border-sandstone-200">
-              <span>Total Contribution Eligible for 80G:</span>
-              <span>₹{(receiptData?.amount || 1501).toLocaleString()}.00</span>
-            </div>
-          </div>
-
-          {/* Legal Certification & Signatures */}
-          <div className="pt-6 flex items-end justify-between text-xs">
-            <div className="max-w-xs text-[10px] text-sandstone-500 leading-tight">
-              * This electronic certificate is generated under Section 80G and does not require a physical ink signature. Eligible for 50% deduction while filing ITR-1 / ITR-2.
-            </div>
-
-            <div className="text-center">
-              <div className="w-20 h-20 mx-auto rounded-full border-2 border-dashed border-gold-600 flex items-center justify-center p-1 mb-1 text-[9px] text-gold-700 font-bold uppercase rotate-12">
-                MandirVeda Seal
-              </div>
-              <span className="font-bold text-sanctum-950 block">Chief Sanctum Administrator</span>
-              <span className="text-[10px] text-sandstone-500">Authorized Signatory</span>
-            </div>
-          </div>
-
+          <p className="text-center text-xs text-charcoal-400 mt-2">Scan to verify authenticity</p>
         </div>
 
+        {/* Actions */}
+        <div className="p-6 bg-ivory-50 border-t border-ivory-200 rounded-b-3xl flex justify-end space-x-4">
+          <button 
+            onClick={handlePrint}
+            className="flex items-center space-x-2 px-5 py-2.5 bg-ivory-200 hover:bg-ivory-300 text-charcoal-700 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-charcoal-200 focus:ring-offset-2"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Print Receipt</span>
+          </button>
+          <button 
+            className="flex items-center space-x-2 px-5 py-2.5 bg-copper-400 hover:bg-copper-500 text-ivory-50 rounded-xl transition-all duration-300 shadow-copper-glow focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download PDF</span>
+          </button>
+        </div>
       </div>
     </div>
   );

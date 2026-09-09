@@ -1,111 +1,95 @@
 import React from 'react';
-import { X, Calendar, Clock, Sun, Moon, Sparkles, ShieldCheck } from 'lucide-react';
-import { PANCHANG_TODAY } from '../data/mockData';
+import { X, Calendar, Sparkles } from 'lucide-react';
+import { PANCHANG_TODAY, PUJA_RECOMMENDATIONS } from '../data/mockData';
 
 export default function PanchangModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-sanctum-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-sanctum-lg border border-gold-500/30 overflow-hidden flex flex-col">
-        
+    <div className="fixed inset-0 bg-charcoal-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-ivory-50 rounded-3xl w-full max-w-lg shadow-elevated relative animate-scale-in max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="bg-sanctum-950 text-white p-6 border-b border-gold-500/30 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400">
-              <Calendar className="w-5 h-5" />
+        <div className="bg-charcoal-900 text-ivory-50 p-6 rounded-t-3xl flex items-center justify-between relative overflow-hidden">
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="bg-temple-gold-500/20 p-2 rounded-xl">
+              <Calendar className="w-6 h-6 text-temple-gold-400" />
             </div>
-            <div>
-              <h3 className="font-serif font-bold text-lg text-white">Daily Vedic Panchang</h3>
-              <p className="text-xs text-sandstone-300">{PANCHANG_TODAY.date}</p>
-            </div>
+            <h2 className="font-display text-2xl font-bold">Today's Panchang</h2>
           </div>
-
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-sanctum-900 border border-white/20 text-white hover:bg-sanctum-850"
-          >
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="relative z-10 text-ivory-200 hover:text-white bg-charcoal-800 hover:bg-charcoal-700 p-2 rounded-full transition-colors">
+            <X className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* Festival Highlight Banner */}
-        <div className="bg-gradient-to-r from-terracotta-50 via-gold-50 to-terracotta-50 px-6 py-3 border-b border-sandstone-200 flex items-center gap-2 text-xs text-sanctum-950">
-          <Sparkles className="w-4 h-4 text-terracotta-600 shrink-0" />
-          <span>
-            Today's Festival: <strong>{PANCHANG_TODAY.festival}</strong>
-          </span>
-        </div>
-
-        {/* Panchang Grid Elements */}
-        <div className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-2xl bg-sandstone-50 border border-sandstone-200">
-              <span className="text-[11px] font-bold text-sandstone-500 uppercase tracking-wider block">Tithi</span>
-              <strong className="text-sm font-serif text-sanctum-950 mt-0.5 block">{PANCHANG_TODAY.tithi}</strong>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-sandstone-50 border border-sandstone-200">
-              <span className="text-[11px] font-bold text-sandstone-500 uppercase tracking-wider block">Nakshatra</span>
-              <strong className="text-sm font-serif text-sanctum-950 mt-0.5 block">{PANCHANG_TODAY.nakshatra}</strong>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-sandstone-50 border border-sandstone-200">
-              <span className="text-[11px] font-bold text-sandstone-500 uppercase tracking-wider block">Yoga</span>
-              <strong className="text-sm font-serif text-sanctum-950 mt-0.5 block">{PANCHANG_TODAY.yoga}</strong>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-sandstone-50 border border-sandstone-200">
-              <span className="text-[11px] font-bold text-sandstone-500 uppercase tracking-wider block">Karana</span>
-              <strong className="text-sm font-serif text-sanctum-950 mt-0.5 block">{PANCHANG_TODAY.karana}</strong>
-            </div>
+          {/* Decorative pattern */}
+          <div className="absolute right-0 top-0 opacity-10 transform translate-x-1/3 -translate-y-1/3">
+            <svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg>
           </div>
-
-          {/* Shubh & Ashubh Muhurtas */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            
-            <div className="p-4 rounded-2xl bg-tulsi-50 border border-tulsi-200 space-y-2">
-              <span className="text-xs font-bold text-tulsi-800 uppercase tracking-wide flex items-center gap-1.5">
-                <Sun className="w-4 h-4 text-tulsi-600" />
-                <span>Auspicious Timings (Shubh)</span>
-              </span>
-              <div className="text-xs text-tulsi-950 space-y-1">
-                <p>Abhijit Muhurat: <strong>{PANCHANG_TODAY.abhijitMuhurat}</strong></p>
-                <p>Brahma Muhurta: <strong>04:30 AM – 05:18 AM</strong></p>
-                <p>Amrit Kaal: <strong>08:20 AM – 09:55 AM</strong></p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 space-y-2">
-              <span className="text-xs font-bold text-red-800 uppercase tracking-wide flex items-center gap-1.5">
-                <Moon className="w-4 h-4 text-red-600" />
-                <span>Inauspicious Timings (Ashubh)</span>
-              </span>
-              <div className="text-xs text-red-950 space-y-1">
-                <p>Rahu Kaal: <strong>{PANCHANG_TODAY.rahuKaal}</strong></p>
-                <p>Yamaganda: <strong>{PANCHANG_TODAY.yamaganda}</strong></p>
-                <p>Gulika Kaal: <strong>12:15 PM – 01:45 PM</strong></p>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Celestial Rising */}
-          <div className="flex items-center justify-around p-3.5 rounded-2xl bg-sandstone-50 border border-sandstone-200 text-xs text-sandstone-700">
-            <div className="flex items-center gap-2">
-              <Sun className="w-4 h-4 text-amber-500" />
-              <span>Sunrise: <strong>{PANCHANG_TODAY.sunrise}</strong></span>
-            </div>
-            <div className="h-4 w-px bg-sandstone-300"></div>
-            <div className="flex items-center gap-2">
-              <Moon className="w-4 h-4 text-indigo-500" />
-              <span>Sunset: <strong>{PANCHANG_TODAY.sunset}</strong></span>
-            </div>
-          </div>
-
         </div>
 
+        <div className="p-6 overflow-y-auto">
+          {PANCHANG_TODAY?.festival && (
+            <div className="bg-gradient-to-r from-temple-gold-100 to-temple-gold-50 border border-temple-gold-200 p-4 rounded-2xl mb-6 shadow-sm flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-temple-gold-600 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-temple-gold-600 uppercase tracking-wider mb-1">Today's Festival</p>
+                <p className="font-display text-lg font-bold text-charcoal-900">{PANCHANG_TODAY.festival}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl border border-ivory-200 p-5 shadow-sm mb-6">
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+              <div>
+                <p className="text-charcoal-400 font-medium mb-0.5">Date</p>
+                <p className="font-semibold text-charcoal-900">{PANCHANG_TODAY?.date}</p>
+              </div>
+              <div>
+                <p className="text-charcoal-400 font-medium mb-0.5">Tithi</p>
+                <p className="font-semibold text-charcoal-900">{PANCHANG_TODAY?.tithi}</p>
+              </div>
+              <div>
+                <p className="text-charcoal-400 font-medium mb-0.5">Nakshatra</p>
+                <p className="font-semibold text-charcoal-900">{PANCHANG_TODAY?.nakshatra}</p>
+              </div>
+              <div>
+                <p className="text-charcoal-400 font-medium mb-0.5">Yoga</p>
+                <p className="font-semibold text-charcoal-900">{PANCHANG_TODAY?.yoga}</p>
+              </div>
+              <div>
+                <p className="text-charcoal-400 font-medium mb-0.5">Karana</p>
+                <p className="font-semibold text-charcoal-900">{PANCHANG_TODAY?.karana}</p>
+              </div>
+              <div>
+                <p className="text-charcoal-400 font-medium mb-0.5">Sunrise - Sunset</p>
+                <p className="font-semibold text-charcoal-900">{PANCHANG_TODAY?.sunrise} - {PANCHANG_TODAY?.sunset}</p>
+              </div>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-ivory-200 grid grid-cols-2 gap-6 text-sm">
+              <div>
+                <p className="text-charcoal-400 font-medium mb-0.5">Abhijit Muhurat</p>
+                <p className="font-semibold text-sage-600">{PANCHANG_TODAY?.abhijitMuhurat}</p>
+              </div>
+              <div>
+                <p className="text-charcoal-400 font-medium mb-0.5">Rahu Kaal</p>
+                <p className="font-semibold text-vermilion-500">{PANCHANG_TODAY?.rahuKaal}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-display text-xl font-bold text-charcoal-900">Personalized Puja Recommendations</h3>
+            {PUJA_RECOMMENDATIONS?.map((puja, idx) => (
+              <div key={idx} className="bg-ivory-100 rounded-2xl p-5 border border-ivory-200 shadow-warm">
+                <h4 className="font-sans font-bold text-charcoal-900 mb-1">{puja.event}</h4>
+                <p className="text-sm text-charcoal-600 mb-4">{puja.message}</p>
+                <button className="w-full bg-copper-400 hover:bg-copper-500 text-ivory-50 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 shadow-copper-glow">
+                  Book Recommended Puja
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

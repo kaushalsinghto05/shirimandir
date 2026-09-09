@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HeroSanctum from './components/HeroSanctum';
+import VerifiedTrustBadges from './components/VerifiedTrustBadges';
 import LiveDarshanQueueSection from './components/LiveDarshanQueueSection';
 import FeaturedPujasSection from './components/FeaturedPujasSection';
+import GuidedDarshanSection from './components/GuidedDarshanSection';
+import YatraPackagesSection from './components/YatraPackagesSection';
 import ChadhavaSection from './components/ChadhavaSection';
+import AstroToolsModal from './components/AstroToolsModal';
+import SanatanWallSection from './components/SanatanWallSection';
 import TestimonialSection from './components/TestimonialSection';
+import ReferralSection from './components/ReferralSection';
 import TempleDirectory from './components/TempleDirectory';
 import TempleDetailModal from './components/TempleDetailModal';
 import LoginModal from './components/LoginModal';
@@ -17,25 +23,24 @@ import WishlistDrawer from './components/WishlistDrawer';
 import AdminDashboard from './components/AdminDashboard';
 import PanchangModal from './components/PanchangModal';
 import DevotionalLibraryModal from './components/DevotionalLibraryModal';
-import AstroToolsModal from './components/AstroToolsModal';
 import StoreModal from './components/StoreModal';
 import Footer from './components/Footer';
 import { TEMPLES, FEATURED_PUJAS } from './data/mockData';
 
 export default function App() {
   // Navigation & View Mode
-  const [activeTab, setActiveTab] = useState('home'); // 'home', 'temples', 'pujas', 'chadhava', 'panchang', 'library', 'astro', 'store', 'account'
+  const [activeTab, setActiveTab] = useState('home');
   const [isAdminMode, setIsAdminMode] = useState(false);
 
   // Devotee Authentication State
-  const [user, setUser] = useState(null); // When logged in: { name, phone, email, gotra, rashi }
+  const [user, setUser] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [pendingServiceToBookAfterLogin, setPendingServiceToBookAfterLogin] = useState(null);
 
   // Multi-Temple Wishlist State
   const [wishlist, setWishlist] = useState(() => {
     try {
-      const saved = localStorage.getItem('mandirveda_wishlist');
+      const saved = localStorage.getItem('shirimandir_wishlist');
       return saved ? JSON.parse(saved) : ['kashi-vishwanath', 'kedarnath-dham'];
     } catch {
       return ['kashi-vishwanath', 'kedarnath-dham'];
@@ -63,7 +68,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('mandirveda_wishlist', JSON.stringify(wishlist));
+      localStorage.setItem('shirimandir_wishlist', JSON.stringify(wishlist));
     } catch {
       // Ignored
     }
@@ -85,7 +90,6 @@ export default function App() {
   // Login & Booking Gate Enforcement
   const handleInitiateBooking = (service) => {
     if (!user) {
-      // User must pass login/signup gate first as per required user flow!
       setPendingServiceToBookAfterLogin(service);
       setLoginModalOpen(true);
     } else {
@@ -96,8 +100,6 @@ export default function App() {
   const handleLoginSuccess = (devoteeData) => {
     setUser(devoteeData);
     setLoginModalOpen(false);
-
-    // If booking was paused for login gate, immediately resume into step 3 & 4!
     if (pendingServiceToBookAfterLogin) {
       setActiveBookingService(pendingServiceToBookAfterLogin);
       setPendingServiceToBookAfterLogin(null);
@@ -135,7 +137,6 @@ export default function App() {
       }
       return t;
     }));
-    alert(`Published updated wait time for ${templeId}: ~${newMinutes} minutes!`);
   };
 
   // Handle Tab navigation
@@ -160,9 +161,18 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Share Experience handler (Sanatan Wall)
+  const handleShareExperience = () => {
+    if (!user) {
+      setLoginModalOpen(true);
+    } else {
+      alert('Thank you! Your experience has been shared with the Sanatan community. 🙏');
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#FDFBF7] text-sanctum-950 font-sans selection:bg-gold-500 selection:text-sanctum-950">
-      
+    <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans">
+
       {/* 1. Global Navigation Bar */}
       <Navbar
         activeTab={activeTab}
@@ -209,9 +219,16 @@ export default function App() {
           <ChadhavaSection
             onOfferChadhava={handleInitiateBooking}
           />
+        ) : activeTab === 'yatra' ? (
+          <YatraPackagesSection
+            onBookYatra={handleInitiateBooking}
+          />
         ) : (
-          /* HOMEPAGE STORYTELLING LAYOUT */
+          /* ═══════════════════════════════════════════════
+             HOMEPAGE — Full Landing Page Section Flow
+             ═══════════════════════════════════════════════ */
           <>
+            {/* 1. Hero — Bold headline, CTAs, trust stats, deity filter */}
             <HeroSanctum
               onExplorePujas={() => {
                 const el = document.getElementById('pujas-section');
@@ -225,7 +242,10 @@ export default function App() {
               setSelectedDeityFilter={setSelectedDeityFilter}
             />
 
-            {/* Exclusive Feature: Live Darshan Queue Telemetry */}
+            {/* 2. Verified Temple Trust Badges — transparency layer */}
+            <VerifiedTrustBadges temples={templesData} />
+
+            {/* 3. Live Darshan Queue & Wait-Time Gauge */}
             <LiveDarshanQueueSection
               temples={templesData}
               onSelectTemple={(temple) => setActiveTempleModal(temple)}
@@ -233,19 +253,42 @@ export default function App() {
               onToggleWishlist={handleToggleWishlist}
             />
 
-            {/* Auspicious Pujas with Gotra Recitation */}
-            <FeaturedPujasSection
-              onBookPuja={handleInitiateBooking}
-              selectedDeityFilter={selectedDeityFilter}
+            {/* 4. Gotra-Personalized Puja Section */}
+            <div id="pujas-section">
+              <FeaturedPujasSection
+                onBookPuja={handleInitiateBooking}
+                selectedDeityFilter={selectedDeityFilter}
+              />
+            </div>
+
+            {/* 5. Guided In-Person Darshan Assistance */}
+            <GuidedDarshanSection
+              onBookGuidedDarshan={handleInitiateBooking}
             />
 
-            {/* Sacred Chadhava & Living Gau Seva */}
+            {/* 6. Yatra Packages — Multi-day pilgrimages */}
+            <YatraPackagesSection
+              onBookYatra={handleInitiateBooking}
+            />
+
+            {/* 7. Sacred Chadhava & Prasadam with delivery tracker */}
             <ChadhavaSection
               onOfferChadhava={handleInitiateBooking}
             />
 
-            {/* Devotee Testimonials & Video Sankalpa Stories */}
+            {/* 8. Vedic Astro Tools — Inline section on homepage */}
+            <AstroToolsModal isOpen={false} onClose={() => {}} />
+
+            {/* 9. Sanatan Wall — Community devotee feed */}
+            <SanatanWallSection
+              onShareExperience={handleShareExperience}
+            />
+
+            {/* 10. Testimonials + Press credibility strip */}
             <TestimonialSection />
+
+            {/* 11. Referral / Community program */}
+            <ReferralSection />
           </>
         )}
       </main>
@@ -253,7 +296,9 @@ export default function App() {
       {/* 3. Global Footer */}
       <Footer onNavigate={handleNavClick} />
 
-      {/* MODALS & SLIDE-OVERS */}
+      {/* ═══════════════════════════════════════════════
+         MODALS & SLIDE-OVERS
+         ═══════════════════════════════════════════════ */}
 
       {/* Temple Detail Modal */}
       {activeTempleModal && (
@@ -276,7 +321,7 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
-      {/* Puja / Chadhava Booking Flow (6-Stage Stepper) */}
+      {/* Puja / Chadhava Booking Flow */}
       {activeBookingService && (
         <PujaBookingModal
           service={activeBookingService}
@@ -295,7 +340,7 @@ export default function App() {
         />
       )}
 
-      {/* Booking Confirmation & Prasad Delivery Tracker Modal */}
+      {/* Booking Confirmation & Prasad Delivery Tracker */}
       {confirmationData && (
         <BookingConfirmationModal
           confirmationData={confirmationData}
@@ -308,7 +353,7 @@ export default function App() {
         />
       )}
 
-      {/* Official 80G Tax Exemption Donation Receipt */}
+      {/* 80G Tax Exemption Donation Receipt */}
       {receiptModalData && (
         <Receipt80GModal
           receiptData={receiptModalData}
@@ -338,7 +383,7 @@ export default function App() {
         onClose={() => setLibraryModalOpen(false)}
       />
 
-      {/* Astro Tools Modal */}
+      {/* Astro Tools Modal (when opened from nav) */}
       <AstroToolsModal
         isOpen={astroModalOpen}
         onClose={() => setAstroModalOpen(false)}

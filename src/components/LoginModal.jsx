@@ -1,190 +1,122 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  ShieldCheck, 
-  Sparkles, 
-  Phone, 
-  Mail, 
-  ArrowRight, 
-  CheckCircle2, 
-  Lock 
-} from 'lucide-react';
+import { X } from 'lucide-react';
 
 export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
-  const [step, setStep] = useState('input'); // 'input' or 'otp'
-  const [phoneOrEmail, setPhoneOrEmail] = useState('9876543210');
-  const [otp, setOtp] = useState(['', '', '', '']);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState(1); // 1: phone, 2: otp, 3: profile
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [profile, setProfile] = useState({ name: '', gotra: '', rashi: '', email: '' });
 
   if (!isOpen) return null;
 
-  const handleSendOtp = (e) => {
-    e.preventDefault();
-    if (!phoneOrEmail) return;
-    setStep('otp');
+  const handleSendOtp = () => setStep(2);
+  const handleVerifyOtp = () => setStep(3);
+  const handleSubmitProfile = () => {
+    onLoginSuccess({ ...profile, phone });
   };
 
-  const handleOtpChange = (val, index) => {
-    if (val.length > 1) val = val[0];
-    const newOtp = [...otp];
-    newOtp[index] = val;
-    setOtp(newOtp);
-
-    // Auto-advance focus
-    if (val && index < 3) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`);
-      if (nextInput) nextInput.focus();
-    }
-  };
-
-  const handleQuickDevFill = () => {
-    setOtp(['1', '0', '0', '8']);
-  };
-
-  const handleVerify = (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onLoginSuccess({
-        name: "Kaushal Singh",
-        phone: `+91 ${phoneOrEmail}`,
-        email: "kaushal.singh@mandirveda.com",
-        gotra: "Kashyap",
-        rashi: "Dhanu (Sagittarius)",
-        isVerified: true
-      });
-      onClose();
-    }, 600);
-  };
+  const handleProfileChange = (e) => setProfile(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-sanctum-950/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-sanctum-lg border border-gold-500/30 overflow-hidden">
+    <div className="fixed inset-0 bg-charcoal-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all">
+      <div className="relative max-w-md w-full bg-ivory-50 rounded-3xl shadow-elevated p-8 animate-scale-in">
+        <button onClick={onClose} className="absolute top-4 right-4 text-charcoal-500 hover:text-charcoal-900 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
         
-        {/* Decorative Arch Top Banner */}
-        <div className="bg-gradient-to-r from-sanctum-950 via-sanctum-900 to-sanctum-950 p-6 text-white text-center relative border-b border-gold-500/30">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-sanctum-950/80 border border-white/20 text-white hover:bg-sanctum-800 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-gold-glow mb-3">
-            <span className="text-sanctum-950 font-serif font-bold text-2xl">ॐ</span>
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 bg-copper-400 text-ivory-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">ॐ</span>
           </div>
-
-          <h3 className="text-xl font-serif font-bold text-sandstone-50">
-            Devotee Sanctum Sign In
-          </h3>
-          <p className="text-xs text-sandstone-300 mt-1">
-            Access personalized Gotra recitation, live video sankalpa & prasad tracking
+          <h2 className="text-2xl font-display text-charcoal-900 mb-2">Welcome, Devotee</h2>
+          <p className="text-charcoal-500 font-sans text-sm">
+            Login to book pujas, track prasad & manage your spiritual journey
           </p>
         </div>
 
-        {/* Modal Form Content */}
-        <div className="p-6">
-          {step === 'input' ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-sandstone-700 mb-2">
-                  Mobile Number or Devotee Email
-                </label>
-                <div className="flex rounded-2xl border border-sandstone-200 overflow-hidden focus-within:border-gold-500 focus-within:ring-2 focus-within:ring-gold-500/20 transition-all">
-                  <span className="bg-sandstone-100 px-3.5 py-3 text-sm font-semibold text-sandstone-700 flex items-center border-r border-sandstone-200">
-                    +91
-                  </span>
-                  <input
-                    type="text"
-                    value={phoneOrEmail}
-                    onChange={(e) => setPhoneOrEmail(e.target.value)}
-                    placeholder="Enter 10-digit mobile number"
-                    className="w-full px-4 py-3 text-sm text-sanctum-950 bg-white focus:outline-none"
-                    required
-                  />
-                </div>
+        <div className="space-y-6">
+          {step === 1 && (
+            <div>
+              <label className="block text-sm font-medium text-charcoal-700 mb-2">Phone Number</label>
+              <div className="flex">
+                <span className="inline-flex items-center px-4 rounded-l-xl border border-r-0 border-ivory-200 bg-ivory-100 text-charcoal-700 sm:text-sm">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-xl focus:ring-copper-400 focus:border-copper-400 sm:text-sm border-ivory-200"
+                  placeholder="Enter your phone number"
+                />
               </div>
-
-              <button
-                type="submit"
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-sanctum-950 font-bold text-sm shadow-gold-glow flex items-center justify-center gap-2 transition-all"
+              <button 
+                onClick={handleSendOtp}
+                className="mt-6 w-full bg-copper-400 text-ivory-50 py-3 rounded-xl hover:bg-copper-500 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-warm-lg shadow-copper-glow font-medium"
               >
-                <span>Continue to OTP Verification</span>
-                <ArrowRight className="w-4 h-4" />
+                Send OTP
               </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerify} className="space-y-5">
-              <div className="text-center">
-                <p className="text-xs text-sandstone-600">
-                  Enter the 4-digit sacred verification code sent to <br />
-                  <strong className="text-sanctum-950">+91 {phoneOrEmail}</strong>
-                </p>
-              </div>
-
-              {/* 4-digit OTP Inputs */}
-              <div className="flex justify-center gap-3">
-                {otp.map((digit, i) => (
-                  <input
-                    key={i}
-                    id={`otp-input-${i}`}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(e.target.value, i)}
-                    className="w-12 h-14 text-center font-serif text-2xl font-bold rounded-2xl border-2 border-sandstone-200 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 focus:outline-none transition-all"
-                    required
-                  />
-                ))}
-              </div>
-
-              {/* Quick Fill Dev Helper */}
-              <div className="flex items-center justify-between text-xs">
-                <button
-                  type="button"
-                  onClick={handleQuickDevFill}
-                  className="text-gold-700 hover:text-gold-800 font-semibold underline underline-offset-2 flex items-center gap-1"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Auto-fill Dev OTP (1008)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setStep('input')}
-                  className="text-sandstone-500 hover:text-sanctum-900"
-                >
-                  Change number
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-sanctum-950 font-bold text-sm shadow-gold-glow flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <span>Verifying Sanctum Credentials...</span>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Verify & Continue Booking</span>
-                  </>
-                )}
-              </button>
-            </form>
+            </div>
           )}
 
-          {/* Trust Pledge Note */}
-          <div className="mt-6 pt-4 border-t border-sandstone-100 flex items-start gap-2.5 text-[11px] text-sandstone-600">
-            <Lock className="w-4 h-4 text-tulsi-600 shrink-0 mt-0.5" />
-            <span>
-              <strong>Sanctum Confidentiality:</strong> Your family Gotra, birth details, and prayer intentions are kept strictly sacred and never shared commercially.
-            </span>
-          </div>
-        </div>
+          {step === 2 && (
+            <div className="animate-fade-in-up">
+              <label className="block text-sm font-medium text-charcoal-700 mb-2">Enter OTP</label>
+              <input
+                type="text"
+                maxLength="4"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="block w-full px-4 py-3 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400 text-center tracking-widest text-lg font-mono"
+                placeholder="0 0 0 0"
+              />
+              <button 
+                onClick={handleVerifyOtp}
+                className="mt-6 w-full bg-copper-400 text-ivory-50 py-3 rounded-xl hover:bg-copper-500 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-warm-lg shadow-copper-glow font-medium"
+              >
+                Verify OTP
+              </button>
+            </div>
+          )}
 
+          {step === 3 && (
+            <div className="animate-fade-in-up space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-charcoal-700 mb-1">Full Name</label>
+                <input type="text" name="name" value={profile.name} onChange={handleProfileChange} className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal-700 mb-1">Gotra</label>
+                <select name="gotra" value={profile.gotra} onChange={handleProfileChange} className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400">
+                  <option value="">Select Gotra</option>
+                  <option value="Kashyap">Kashyap</option>
+                  <option value="Bharadwaj">Bharadwaj</option>
+                  <option value="Vatsa">Vatsa</option>
+                  <option value="Sandilya">Sandilya</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal-700 mb-1">Rashi</label>
+                <select name="rashi" value={profile.rashi} onChange={handleProfileChange} className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400">
+                  <option value="">Select Rashi</option>
+                  <option value="Mesh">Mesh (Aries)</option>
+                  <option value="Vrishabha">Vrishabha (Taurus)</option>
+                  <option value="Mithun">Mithun (Gemini)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal-700 mb-1">Email</label>
+                <input type="email" name="email" value={profile.email} onChange={handleProfileChange} className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+              </div>
+              <button 
+                onClick={handleSubmitProfile}
+                className="mt-6 w-full bg-copper-400 text-ivory-50 py-3 rounded-xl hover:bg-copper-500 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-warm-lg shadow-copper-glow font-medium"
+              >
+                Enter Sanctum
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
