@@ -81,13 +81,13 @@ export default function FeaturedPujasSection({ onBookPuja, selectedDeityFilter =
                 <div className="pt-4 border-t border-ivory-200 flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-mono font-bold text-copper-500">₹{puja.discountedPrice}</span>
+                      <span className="text-xl font-mono font-bold text-copper-500">₹{(puja.price || puja.discountedPrice || 1501).toLocaleString('en-IN')}</span>
                       {puja.originalPrice && (
-                        <span className="text-sm font-mono text-charcoal-500 line-through">₹{puja.originalPrice}</span>
+                        <span className="text-sm font-mono text-charcoal-500 line-through">₹{puja.originalPrice.toLocaleString('en-IN')}</span>
                       )}
                     </div>
-                    {puja.discountPercentage && (
-                      <span className="text-xs font-medium text-sage-600">Save {puja.discountPercentage}%</span>
+                    {(puja.discount || puja.discountPercentage) && (
+                      <span className="text-xs font-medium text-sage-600">Save {puja.discount || puja.discountPercentage + '%'}</span>
                     )}
                   </div>
                   

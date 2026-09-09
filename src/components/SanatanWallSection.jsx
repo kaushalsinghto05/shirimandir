@@ -59,32 +59,38 @@ export default function SanatanWallSection({ onShareExperience }) {
 
         {/* Masonry Grid */}
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
-          {filteredPosts.map(post => (
-            <div
-              key={post.id}
-              className="break-inside-avoid bg-ivory-100 rounded-2xl shadow-warm mb-6 p-5 hover:-translate-y-0.5 hover:shadow-warm-lg transition-all duration-300"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <img
-                  src={post.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'User')}&background=C17F59&color=fff`}
-                  alt={post.author?.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <h3 className="font-sans font-medium text-charcoal-900 truncate">
-                      {post.author?.name}
-                    </h3>
-                    {post.author?.verified && (
-                      <BadgeCheck className="w-4 h-4 text-sage-500 flex-shrink-0" />
-                    )}
+          {filteredPosts.map(post => {
+            const authorName = typeof post.author === 'string' ? post.author : (post.author?.name || 'Devotee');
+            const authorAvatar = post.avatar || post.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=C17F59&color=fff`;
+            const authorCity = post.city || post.author?.city || 'India';
+            const isVerified = post.verified ?? post.author?.verified ?? true;
+
+            return (
+                <div
+                  key={post.id}
+                  className="break-inside-avoid bg-ivory-100 rounded-2xl shadow-warm mb-6 p-5 hover:-translate-y-0.5 hover:shadow-warm-lg transition-all duration-300"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <img
+                      src={authorAvatar}
+                      alt={authorName}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1">
+                        <h3 className="font-sans font-medium text-charcoal-900 truncate">
+                          {authorName}
+                        </h3>
+                        {isVerified && (
+                          <BadgeCheck className="w-4 h-4 text-sage-500 flex-shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex items-center text-xs text-charcoal-500">
+                        <MapPin className="w-3 h-3 mr-1" />
+                        {authorCity}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center text-xs text-charcoal-500">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    {post.author?.city}
-                  </div>
-                </div>
-              </div>
 
               {post.templeName && (
                 <div className="mb-3">
@@ -127,7 +133,8 @@ export default function SanatanWallSection({ onShareExperience }) {
                 </span>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
 
         <div className="mt-12 text-center">

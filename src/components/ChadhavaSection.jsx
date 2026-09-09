@@ -47,7 +47,7 @@ export default function ChadhavaSection({ onOfferChadhava }) {
                     {item.name}
                   </h3>
                   <p className="text-sm text-charcoal-700 font-sans mb-4 leading-relaxed">
-                    {item.description}
+                    {item.desc || item.description}
                   </p>
                 </div>
                 

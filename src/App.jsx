@@ -277,7 +277,7 @@ export default function App() {
             />
 
             {/* 8. Vedic Astro Tools — Inline section on homepage */}
-            <AstroToolsModal isOpen={false} onClose={() => {}} />
+            <AstroToolsModal isInline={true} />
 
             {/* 9. Sanatan Wall — Community devotee feed */}
             <SanatanWallSection

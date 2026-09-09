@@ -2,9 +2,10 @@ import React from 'react';
 import { X, Sparkles, Moon, Sun, Star } from 'lucide-react';
 import { ASTRO_TOOLS } from '../data/mockData';
 
-export default function AstroToolsModal({ isOpen, onClose }) {
-  const isModal = isOpen !== undefined;
-  if (isModal && !isOpen) return null;
+export default function AstroToolsModal({ isOpen, onClose, isInline = false }) {
+  if (!isInline && !isOpen) return null;
+
+  const isModal = !isInline;
 
   const ICONS = {
     'Daily Horoscope': Sun,

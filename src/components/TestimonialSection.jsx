@@ -75,7 +75,7 @@ export default function TestimonialSection() {
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="font-sans font-bold text-charcoal-900">{testimonial.name}</span>
-                      {testimonial.verified && (
+                      {(testimonial.verified || testimonial.verifiedDevotee) && (
                         <BadgeCheck className="w-4 h-4 text-sage-500" title="Verified Devotee" />
                       )}
                     </div>

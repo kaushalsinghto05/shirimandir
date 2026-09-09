@@ -41,7 +41,7 @@ const YatraPackagesSection = ({ onBookYatra }) => {
                     <h3 className="text-2xl font-display font-bold mb-1 line-clamp-1">{yatra.title}</h3>
                     <div className="flex items-center gap-1.5 text-sm font-medium font-sans text-ivory-200">
                       <Map className="w-4 h-4" />
-                      <span className="line-clamp-1">{yatra.route.join(' → ')}</span>
+                      <span className="line-clamp-1">{yatra.subtitle || (Array.isArray(yatra.temples) ? yatra.temples.join(' → ') : '')}</span>
                     </div>
                   </div>
                 </div>
@@ -58,7 +58,7 @@ const YatraPackagesSection = ({ onBookYatra }) => {
                     </span>
                     <span className="inline-flex items-center gap-1 bg-sage-100 text-sage-700 px-2.5 py-1 rounded-full text-xs font-semibold font-sans">
                       <Star className="w-3.5 h-3.5 fill-current" />
-                      {yatra.rating} ({yatra.reviews})
+                      {yatra.rating} ({yatra.reviewCount || yatra.reviews || 0})
                     </span>
                   </div>
 
@@ -75,7 +75,7 @@ const YatraPackagesSection = ({ onBookYatra }) => {
                     </div>
                     <div className="col-span-2">
                       <span className="text-charcoal-500">Transport: </span>
-                      <span className="font-medium">{yatra.transportType}</span>
+                      <span className="font-medium">{yatra.transport || yatra.transportType || 'AC Volvo'}</span>
                     </div>
                   </div>
 
@@ -93,11 +93,14 @@ const YatraPackagesSection = ({ onBookYatra }) => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                      <button className="py-2.5 px-4 rounded-xl border-2 border-copper-400 text-copper-600 font-semibold font-sans hover:bg-copper-50 transition-all duration-300 focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2 text-sm text-center">
+                      <button 
+                        onClick={() => onBookYatra && onBookYatra(yatra)}
+                        className="py-2.5 px-4 rounded-xl border-2 border-copper-400 text-copper-600 font-semibold font-sans hover:bg-copper-50 transition-all duration-300 focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2 text-sm text-center"
+                      >
                         View Itinerary
                       </button>
                       <button 
-                        onClick={() => onBookYatra(yatra.id)}
+                        onClick={() => onBookYatra && onBookYatra(yatra)}
                         className="py-2.5 px-4 rounded-xl bg-copper-400 text-white font-semibold font-sans shadow-copper-glow hover:bg-copper-500 transition-all duration-300 focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2 text-sm text-center"
                       >
                         Book Yatra
