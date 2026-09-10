@@ -54,7 +54,12 @@ export default function DevotionalLibraryModal({ isOpen, onClose }) {
             {filteredItems.map((item, idx) => (
               <div key={idx} className="bg-white rounded-2xl p-3 flex gap-4 shadow-sm border border-ivory-200 hover:shadow-warm hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer">
                 <div className="w-20 h-20 rounded-xl overflow-hidden relative shrink-0">
-                  <img src={item.imageUrl || '/images/placeholder.jpg'} alt={item.title} className="w-full h-full object-cover" />
+                  <img 
+                    src={item.thumbnail || item.image || item.imageUrl || '/images/deity_shiva.jpg'} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => { e.target.src = '/images/deity_shiva.jpg'; }}
+                  />
                   <div className="absolute inset-0 bg-charcoal-900/20 group-hover:bg-charcoal-900/40 transition-colors flex items-center justify-center">
                     <PlayCircle className="w-8 h-8 text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
                   </div>

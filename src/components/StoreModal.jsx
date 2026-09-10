@@ -31,7 +31,12 @@ export default function StoreModal({ isOpen, onClose }) {
             {AASHIRWAD_ADDONS?.map((product, idx) => (
               <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-warm border border-ivory-200 flex flex-col hover:shadow-warm-lg hover:-translate-y-1 transition-all duration-300">
                 <div className="h-40 bg-ivory-100 relative">
-                  <img src={product.imageUrl || '/images/placeholder.jpg'} alt={product.name} className="w-full h-full object-cover" />
+                  <img 
+                    src={product.image || product.imageUrl || '/images/addon_prasad_box.jpg'} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => { e.target.src = '/images/addon_prasad_box.jpg'; }}
+                  />
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
                     <span className="font-mono font-bold text-copper-600">₹{product.price}</span>
                   </div>

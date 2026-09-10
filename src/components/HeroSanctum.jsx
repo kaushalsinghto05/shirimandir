@@ -26,7 +26,7 @@ export default function HeroSanctum({
   }, [stats.length]);
 
   return (
-    <div className="relative min-h-screen bg-charcoal-900 overflow-hidden flex flex-col justify-center pb-16 pt-24 lg:pt-32">
+    <div className="relative min-h-screen bg-charcoal-900 overflow-hidden flex flex-col justify-center pb-16 pt-32 sm:pt-36 lg:pt-40">
       
       {/* Multi-layer Background */}
       <div className="absolute inset-0 z-0">
@@ -47,8 +47,8 @@ export default function HeroSanctum({
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, rgba(212,188,124,0.3) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       </div>
 
-      {/* Panchang Marquee Bar */}
-      <div className="absolute top-0 left-0 w-full z-20 bg-charcoal-950/80 backdrop-blur-xl border-b border-temple-gold-500/20 overflow-hidden">
+      {/* Panchang Marquee Bar - Positioned neatly below Navbar */}
+      <div className="absolute top-16 md:top-20 left-0 w-full z-20 bg-charcoal-950/90 backdrop-blur-xl border-b border-temple-gold-500/20 overflow-hidden">
         <div className="relative overflow-hidden py-2.5">
           <div className="flex animate-marquee whitespace-nowrap">
             {[...Array(2)].map((_, i) => (

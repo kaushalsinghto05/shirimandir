@@ -112,7 +112,12 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
             {wishlistedTemples.map(temple => (
               <div key={temple.id} className="bg-ivory-100 rounded-2xl overflow-hidden shadow-warm cursor-pointer hover:-translate-y-1 hover:shadow-warm-lg transition-all duration-300" onClick={() => onSelectTemple(temple)}>
                 <div className="h-40 relative">
-                  <img src={temple.imageUrl || '/images/placeholder.jpg'} alt={temple.name} className="w-full h-full object-cover" />
+                  <img 
+                    src={temple.image || temple.imageUrl || '/images/kashi_vishwanath.jpg'} 
+                    alt={temple.name} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => { e.target.src = '/images/kashi_vishwanath.jpg'; }}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/60 to-transparent"></div>
                   <h3 className="absolute bottom-3 left-4 right-4 font-display font-bold text-ivory-50 text-lg">{temple.name}</h3>
                 </div>

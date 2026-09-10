@@ -44,7 +44,12 @@ export default function WishlistDrawer({ isOpen, onClose, wishlist, temples, onR
               wishlistedTemples.map(temple => (
                 <div key={temple.id} className="bg-ivory-100 rounded-2xl p-4 shadow-sm border border-ivory-200 hover:shadow-warm transition-all duration-300 cursor-pointer" onClick={() => { onSelectTemple(temple); onClose(); }}>
                   <div className="flex items-start space-x-4">
-                    <img src={temple.imageUrl || '/images/placeholder.jpg'} alt={temple.name} className="w-12 h-12 rounded-xl object-cover" />
+                    <img 
+                      src={temple.image || temple.imageUrl || '/images/kashi_vishwanath.jpg'} 
+                      alt={temple.name} 
+                      className="w-12 h-12 rounded-xl object-cover" 
+                      onError={(e) => { e.target.src = '/images/kashi_vishwanath.jpg'; }}
+                    />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-charcoal-900 truncate">{temple.name}</h4>
                       <p className="text-xs text-charcoal-500 truncate">{temple.location} • {temple.deity}</p>
