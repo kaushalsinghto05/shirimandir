@@ -62,7 +62,7 @@ export default function TempleDirectory({ temples, onSelectTemple, wishlist, onT
           return (
             <div key={temple.id} className="bg-ivory-100 rounded-2xl shadow-warm overflow-hidden hover:-translate-y-0.5 hover:shadow-warm-lg transition-all duration-300 flex flex-col">
               <div className="relative h-48 w-full cursor-pointer" onClick={() => onSelectTemple(temple)}>
-                <img src={temple.imageUrl || '/images/placeholder.jpg'} alt={temple.name} className="w-full h-full object-cover" />
+                <img src={temple.image || temple.imageUrl || '/images/kashi_vishwanath.jpg'} alt={temple.name} className="w-full h-full object-cover" onError={(e) => { e.target.src = '/images/kashi_vishwanath.jpg'; }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 to-transparent"></div>
                 
                 {temple.trustBadge && (
