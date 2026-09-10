@@ -60,24 +60,24 @@ export default function Navbar({
 
   return (
     <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${bgClass}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20">
           
           {/* Logo */}
           <div className="flex items-center cursor-pointer select-none" onClick={() => setActiveTab('home')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-copper-400 via-copper-500 to-temple-gold-600 flex items-center justify-center text-ivory-50 text-xl font-bold mr-3 shadow-copper-glow flex-shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-copper-400 via-copper-500 to-temple-gold-600 flex items-center justify-center text-ivory-50 text-lg sm:text-xl font-bold mr-2 sm:mr-3 shadow-copper-glow flex-shrink-0">
               ॐ
             </div>
             <div className="flex flex-col">
               <div className="flex items-baseline space-x-1">
-                <span className={`text-xl md:text-2xl font-display font-bold tracking-wider ${navTextColor}`}>
+                <span className={`text-lg sm:text-2xl font-display font-bold tracking-wider ${navTextColor}`}>
                   SHIRI
                 </span>
-                <span className="text-xl md:text-2xl font-bold text-copper-500 tracking-wider">
+                <span className="text-lg sm:text-2xl font-bold text-copper-500 tracking-wider">
                   MANDIR
                 </span>
               </div>
-              <span className={`text-[10px] md:text-xs uppercase tracking-widest ${navSubTextColor}`}>
+              <span className={`text-[9px] xs:text-[10px] md:text-xs uppercase tracking-wider xs:tracking-widest ${navSubTextColor} truncate max-w-[140px] xs:max-w-none`}>
                 Sacred Temples • Verified Sevas
               </span>
             </div>
