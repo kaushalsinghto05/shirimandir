@@ -49,7 +49,7 @@ export default function UnifiedPaymentModal({ bookingData, onClose, onPaymentSuc
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-4 py-2 rounded-full whitespace-nowrap transition-all text-sm font-medium ${
+                className={`flex items-center px-4 py-2.5 min-h-[44px] rounded-full whitespace-nowrap transition-all text-sm font-medium ${
                   activeTab === tab.id ? 'bg-copper-400 text-ivory-50 shadow-md' : 'bg-ivory-200 text-charcoal-700 hover:bg-ivory-200/80'
                 }`}
               >
@@ -101,7 +101,7 @@ export default function UnifiedPaymentModal({ bookingData, onClose, onPaymentSuc
           )}
 
           {activeTab === 'netbanking' && (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {['SBI', 'HDFC', 'ICICI', 'Axis', 'Kotak', 'More Banks'].map(bank => (
                 <button key={bank} className="py-4 px-2 border border-ivory-200 rounded-xl hover:border-copper-400 hover:bg-copper-400/5 transition-colors flex flex-col items-center justify-center bg-ivory-100">
                   <Building className="w-6 h-6 text-charcoal-500 mb-2" />

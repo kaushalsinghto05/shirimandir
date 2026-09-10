@@ -34,15 +34,15 @@ export default function PujaBookingModal({ service, user, onClose, onProceedToPa
       }`}>
         {completed ? <Check className="w-5 h-5" /> : num}
       </div>
-      <span className={`text-xs mt-2 font-medium ${active ? 'text-charcoal-900' : 'text-charcoal-500'}`}>{label}</span>
+      <span className={`text-xs mt-2 font-medium hidden sm:inline ${active ? 'text-charcoal-900' : 'text-charcoal-500'}`}>{label}</span>
     </div>
   );
 
   return (
     <div className="fixed inset-0 bg-charcoal-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="relative max-w-2xl w-full max-h-[90vh] bg-ivory-50 rounded-3xl shadow-elevated flex flex-col animate-scale-in">
-        <button onClick={onClose} className="absolute top-6 right-6 text-charcoal-500 hover:text-charcoal-900 transition-colors z-10">
-          <X className="w-6 h-6" />
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-charcoal-500 hover:text-charcoal-900 transition-colors z-10 rounded-full hover:bg-ivory-100">
+          <X className="w-5 h-5" />
         </button>
         
         <div className="p-6 border-b border-ivory-200">
@@ -91,23 +91,23 @@ export default function PujaBookingModal({ service, user, onClose, onProceedToPa
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-charcoal-700 mb-1">Primary Devotee Name</label>
-                  <input type="text" value={devoteeDetails.name} onChange={e => setDevoteeDetails({...devoteeDetails, name: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+                  <input type="text" value={devoteeDetails.name} onChange={e => setDevoteeDetails({...devoteeDetails, name: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-charcoal-700 mb-1">Phone Number</label>
-                  <input type="tel" value={devoteeDetails.phone} onChange={e => setDevoteeDetails({...devoteeDetails, phone: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+                  <input type="tel" value={devoteeDetails.phone} onChange={e => setDevoteeDetails({...devoteeDetails, phone: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-charcoal-700 mb-1">Gotra</label>
-                  <input type="text" value={devoteeDetails.gotra} onChange={e => setDevoteeDetails({...devoteeDetails, gotra: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+                  <input type="text" value={devoteeDetails.gotra} onChange={e => setDevoteeDetails({...devoteeDetails, gotra: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-charcoal-700 mb-1">Rashi</label>
-                  <input type="text" value={devoteeDetails.rashi} onChange={e => setDevoteeDetails({...devoteeDetails, rashi: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+                  <input type="text" value={devoteeDetails.rashi} onChange={e => setDevoteeDetails({...devoteeDetails, rashi: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-charcoal-700 mb-1">Prasad Delivery Address</label>
-                  <textarea value={devoteeDetails.address} onChange={e => setDevoteeDetails({...devoteeDetails, address: e.target.value})} rows="3" className="w-full px-4 py-2 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
+                  <textarea value={devoteeDetails.address} onChange={e => setDevoteeDetails({...devoteeDetails, address: e.target.value})} rows="3" className="w-full px-4 py-3 rounded-xl border border-ivory-200 focus:ring-copper-400 focus:border-copper-400" />
                 </div>
               </div>
               <button 

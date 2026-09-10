@@ -7,11 +7,13 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 
   body {
     background-color: #FEFDFB;
     color: #1A1A2E;
+    overflow-x: hidden;
   }
 
   ::selection {

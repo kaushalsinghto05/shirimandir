@@ -147,16 +147,16 @@ export default function Footer({ onNavigate }) {
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-charcoal-800 mt-8">
           <div className="flex gap-4">
-            <button aria-label="Instagram" className="p-2 rounded-full bg-charcoal-800 hover:bg-copper-400 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-copper-400/50">
+            <button aria-label="Instagram" className="p-2.5 rounded-full bg-charcoal-800 hover:bg-copper-400 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-copper-400/50">
               <Instagram className="w-5 h-5" />
             </button>
-            <button aria-label="YouTube" className="p-2 rounded-full bg-charcoal-800 hover:bg-copper-400 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-copper-400/50">
+            <button aria-label="YouTube" className="p-2.5 rounded-full bg-charcoal-800 hover:bg-copper-400 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-copper-400/50">
               <Youtube className="w-5 h-5" />
             </button>
-            <button aria-label="Facebook" className="p-2 rounded-full bg-charcoal-800 hover:bg-copper-400 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-copper-400/50">
+            <button aria-label="Facebook" className="p-2.5 rounded-full bg-charcoal-800 hover:bg-copper-400 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-copper-400/50">
               <Facebook className="w-5 h-5" />
             </button>
-            <button aria-label="Twitter" className="p-2 rounded-full bg-charcoal-800 hover:bg-copper-400 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-copper-400/50">
+            <button aria-label="Twitter" className="p-2.5 rounded-full bg-charcoal-800 hover:bg-copper-400 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-copper-400/50">
               <Twitter className="w-5 h-5" />
             </button>
           </div>

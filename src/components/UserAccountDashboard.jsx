@@ -17,7 +17,7 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 animate-fade-in">
       {/* User Header */}
-      <div className="bg-ivory-100 rounded-3xl p-8 shadow-warm mb-8 flex flex-col md:flex-row items-center md:items-start gap-6">
+      <div className="bg-ivory-100 rounded-3xl p-5 sm:p-8 shadow-warm mb-8 flex flex-col md:flex-row items-center md:items-start gap-6">
         <div className="w-24 h-24 rounded-full bg-copper-400 flex items-center justify-center text-ivory-50 text-4xl font-display font-bold shadow-copper-glow">
           {user?.name?.charAt(0) || 'U'}
         </div>

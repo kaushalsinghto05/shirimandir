@@ -171,7 +171,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans">
+    <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans overflow-x-hidden">
 
       {/* 1. Global Navigation Bar */}
       <Navbar

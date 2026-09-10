@@ -27,7 +27,7 @@ export default function TempleDetailModal({ temple, onClose, onBookSeva, wishlis
           
           <button 
             onClick={onClose} 
-            className="absolute top-4 right-4 bg-charcoal-900/60 hover:bg-charcoal-900 text-ivory-50 p-2 rounded-full transition-all duration-300 backdrop-blur-sm"
+            className="absolute top-4 right-4 bg-charcoal-900/60 hover:bg-charcoal-900 text-ivory-50 p-2.5 rounded-full transition-all duration-300 backdrop-blur-sm"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -35,7 +35,7 @@ export default function TempleDetailModal({ temple, onClose, onBookSeva, wishlis
           
           <button 
             onClick={() => onToggleWishlist && onToggleWishlist(temple.id)} 
-            className="absolute top-4 right-14 bg-charcoal-900/60 hover:bg-charcoal-900 text-ivory-50 p-2 rounded-full transition-all duration-300 backdrop-blur-sm"
+            className="absolute top-4 right-16 bg-charcoal-900/60 hover:bg-charcoal-900 text-ivory-50 p-2.5 rounded-full transition-all duration-300 backdrop-blur-sm"
             aria-label="Wishlist"
           >
             <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-vermilion-500 text-vermilion-500' : 'text-ivory-50'}`} />

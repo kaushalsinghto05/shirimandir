@@ -5,7 +5,7 @@ const VerifiedTrustBadges = ({ temples = [] }) => {
   const verifiedTemples = temples.filter(t => t.trustBadge);
 
   return (
-    <section className="py-16 lg:py-24 bg-ivory-50 relative">
+    <section className="py-10 sm:py-16 lg:py-24 bg-ivory-50 relative">
       {/* Section divider at top */}
       <div className="absolute top-0 left-0 right-0 section-divider" />
       

@@ -24,6 +24,16 @@ export default function Navbar({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
+
   const navLinks = [
     { id: 'home', label: 'Home' },
     { id: 'temples', label: 'Temples' },
@@ -205,7 +215,7 @@ export default function Navbar({
           <div className="md:hidden flex items-center space-x-3">
             <button 
               onClick={onOpenWishlist} 
-              className={`relative p-1.5 rounded-full ${navTextColor}`}
+              className={`relative p-2.5 rounded-full ${navTextColor}`}
               aria-label="Wishlist"
             >
               <Heart className="w-5 h-5" />
@@ -217,7 +227,7 @@ export default function Navbar({
             </button>
             <button 
               onClick={() => setMobileMenuOpen(true)} 
-              className={`p-1.5 rounded-lg ${navTextColor}`}
+              className={`p-2.5 rounded-lg ${navTextColor}`}
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" />

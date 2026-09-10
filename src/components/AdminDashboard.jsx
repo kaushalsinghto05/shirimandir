@@ -21,7 +21,7 @@ export default function AdminDashboard({ onExitAdmin, templesData, onUpdateWaitT
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-temple-gold-400" />
-            <h1 className="font-display text-2xl font-bold tracking-wide">Temple Admin Portal</h1>
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-wide">Temple Admin Portal</h1>
           </div>
           <button 
             onClick={onExitAdmin}
@@ -61,7 +61,7 @@ export default function AdminDashboard({ onExitAdmin, templesData, onUpdateWaitT
           <h2 className="font-display text-2xl font-bold text-charcoal-900 mb-6">Manage Temple Wait Times</h2>
           
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
                 <tr className="border-b border-ivory-200 bg-ivory-50/50">
                   <th className="py-4 px-4 font-semibold text-charcoal-600">Temple Name</th>

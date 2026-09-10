@@ -93,7 +93,7 @@ export default function HeroSanctum({
           </div>
 
           {/* Main Headline */}
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-ivory-50 leading-[1.1] mb-6">
+          <h1 className="font-display text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-ivory-50 leading-[1.1] mb-6">
             Connect Your Soul to
             <br />
             <span className="relative inline-block">
@@ -111,7 +111,7 @@ export default function HeroSanctum({
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-14">
             <button 
               onClick={onExplorePujas}
-              className="w-full sm:w-auto group relative bg-gradient-to-r from-copper-500 to-copper-400 hover:from-copper-400 hover:to-copper-300 text-charcoal-900 font-bold px-10 py-4 rounded-2xl shadow-copper-glow hover:shadow-[0_0_40px_-5px_rgba(193,127,89,0.5)] hover:-translate-y-1 transition-all duration-300 text-base"
+              className="w-full sm:w-auto group relative bg-gradient-to-r from-copper-500 to-copper-400 hover:from-copper-400 hover:to-copper-300 text-charcoal-900 font-bold px-6 sm:px-10 py-4 rounded-2xl shadow-copper-glow hover:shadow-[0_0_40px_-5px_rgba(193,127,89,0.5)] hover:-translate-y-1 transition-all duration-300 text-base"
             >
               <span className="flex items-center justify-center gap-2">
                 Explore 108+ Live Pujas
@@ -120,7 +120,7 @@ export default function HeroSanctum({
             </button>
             <button 
               onClick={onViewDarshanQueue}
-              className="w-full sm:w-auto group flex items-center justify-center px-10 py-4 rounded-2xl border border-ivory-200/30 text-ivory-50 hover:bg-white/10 hover:border-ivory-200/50 transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm text-base font-medium"
+              className="w-full sm:w-auto group flex items-center justify-center px-6 sm:px-10 py-4 rounded-2xl border border-ivory-200/30 text-ivory-50 hover:bg-white/10 hover:border-ivory-200/50 transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm text-base font-medium"
             >
               <span className="relative flex items-center justify-center w-3 h-3 mr-3">
                 <span className="absolute inline-flex w-full h-full rounded-full bg-sage-400 opacity-40 animate-ping-slow" />
@@ -132,7 +132,7 @@ export default function HeroSanctum({
 
           {/* Deity Filter Tabs */}
           <div className="w-full overflow-x-auto scrollbar-hide pb-4 snap-x-mandatory">
-            <div className="flex items-center justify-center space-x-3 min-w-max px-4">
+            <div className="flex items-center justify-start sm:justify-center space-x-3 min-w-max px-4">
               {deities.map(deity => (
                 <button
                   key={deity}
@@ -156,7 +156,7 @@ export default function HeroSanctum({
             {/* Inner subtle glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-temple-gold-400/40 to-transparent" />
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-4">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (

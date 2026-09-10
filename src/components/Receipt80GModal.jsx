@@ -70,16 +70,16 @@ export default function Receipt80GModal({ receiptData, onClose }) {
         </div>
 
         {/* Actions */}
-        <div className="p-6 bg-ivory-50 border-t border-ivory-200 rounded-b-3xl flex justify-end space-x-4">
+        <div className="p-6 bg-ivory-50 border-t border-ivory-200 rounded-b-3xl flex flex-col sm:flex-row sm:justify-end gap-3">
           <button 
             onClick={handlePrint}
-            className="flex items-center space-x-2 px-5 py-2.5 bg-ivory-200 hover:bg-ivory-300 text-charcoal-700 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-charcoal-200 focus:ring-offset-2"
+            className="flex items-center justify-center space-x-2 px-5 py-3 min-h-[44px] bg-ivory-200 hover:bg-ivory-300 text-charcoal-700 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-charcoal-200 focus:ring-offset-2"
           >
             <Printer className="w-4 h-4" />
             <span>Print Receipt</span>
           </button>
           <button 
-            className="flex items-center space-x-2 px-5 py-2.5 bg-copper-400 hover:bg-copper-500 text-ivory-50 rounded-xl transition-all duration-300 shadow-copper-glow focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2"
+            className="flex items-center justify-center space-x-2 px-5 py-3 min-h-[44px] bg-copper-400 hover:bg-copper-500 text-ivory-50 rounded-xl transition-all duration-300 shadow-copper-glow focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2"
           >
             <Download className="w-4 h-4" />
             <span>Download PDF</span>

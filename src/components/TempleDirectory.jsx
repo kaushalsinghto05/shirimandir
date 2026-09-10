@@ -27,7 +27,7 @@ export default function TempleDirectory({ temples, onSelectTemple, wishlist, onT
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
       <div className="mb-12">
-        <h2 className="font-display text-4xl font-bold text-charcoal-900 mb-6 text-center">Explore Sacred Temples</h2>
+        <h2 className="font-display text-3xl sm:text-4xl font-bold text-charcoal-900 mb-6 text-center">Explore Sacred Temples</h2>
         
         <div className="max-w-2xl mx-auto relative mb-8">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
