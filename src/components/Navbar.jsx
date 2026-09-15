@@ -18,8 +18,13 @@ export default function Navbar({
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
+
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+      setScrolledPastHero(window.scrollY > 620);
+    };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -49,13 +54,15 @@ export default function Navbar({
     { id: 'store', label: 'Store' },
   ];
 
-  // Only dark hero mode when on home tab AND not scrolled
-  const isDarkHero = activeTab === 'home' && !scrolled;
+  // Dark hero mode when on home tab AND not scrolled past the hero section
+  const isDarkHero = activeTab === 'home' && !scrolledPastHero;
   const navTextColor = isDarkHero ? 'text-ivory-50' : 'text-charcoal-900';
-  const navSubTextColor = isDarkHero ? 'text-ivory-200' : 'text-charcoal-500';
-  const navHoverColor = isDarkHero ? 'hover:text-copper-400' : 'hover:text-copper-600';
+  const navSubTextColor = isDarkHero ? 'text-[#d4a15a]/80' : 'text-charcoal-500';
+  const navHoverColor = isDarkHero ? 'hover:text-[#d4a15a]' : 'hover:text-copper-600';
   const bgClass = isDarkHero 
-    ? 'bg-transparent' 
+    ? (scrolled 
+        ? 'bg-[#1a1733]/92 backdrop-blur-md shadow-dark border-b border-[#d4a15a]/25' 
+        : 'bg-[#1e1b3a]/70 backdrop-blur-md border-b border-[#d4a15a]/15')
     : 'bg-ivory-50/95 backdrop-blur-md shadow-warm border-b border-ivory-200/80';
 
   return (
@@ -157,9 +164,9 @@ export default function Navbar({
               onClick={() => setIsAdminMode(!isAdminMode)}
               className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-300 ${
                 isAdminMode 
-                  ? 'bg-charcoal-900 text-ivory-50 border-charcoal-900 shadow-sm' 
+                  ? 'bg-[#d4a15a] text-[#1a1733] border-[#d4a15a] font-bold shadow-sm' 
                   : (isDarkHero 
-                      ? 'border-ivory-200/40 text-ivory-100 hover:bg-white/10' 
+                      ? 'border-[#d4a15a]/40 text-[#f5d89f] hover:bg-[#d4a15a]/15 hover:border-[#d4a15a]' 
                       : 'border-ivory-300 text-charcoal-700 hover:bg-ivory-100')
               }`}
             >
@@ -204,7 +211,11 @@ export default function Navbar({
             ) : (
               <button 
                 onClick={onOpenLogin}
-                className="bg-temple-gold-400 hover:bg-temple-gold-500 text-charcoal-900 font-semibold text-sm px-5 py-2 rounded-xl shadow-warm hover:-translate-y-0.5 transition-all duration-300"
+                className={`font-semibold text-sm px-5 py-2 rounded-xl transition-all duration-300 hover:-translate-y-0.5 ${
+                  isDarkHero
+                    ? 'bg-gradient-to-r from-[#d4a15a] via-[#e5b76e] to-[#c5914a] text-[#1a1733] font-bold shadow-[0_2px_15px_rgba(212,161,90,0.3)] hover:shadow-[0_4px_20px_rgba(212,161,90,0.4)]'
+                    : 'bg-temple-gold-400 hover:bg-temple-gold-500 text-charcoal-900 shadow-warm'
+                }`}
               >
                 Devotee Login
               </button>

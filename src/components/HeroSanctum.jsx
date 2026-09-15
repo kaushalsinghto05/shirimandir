@@ -58,7 +58,7 @@ export default function HeroSanctum({
   const currentTemple = featuredTemples[activeTempleIndex];
 
   return (
-    <div className="relative min-h-[85vh] lg:min-h-[88vh] bg-gradient-to-br from-[#1e1b3a] via-[#241e4a] to-[#2d2560] overflow-hidden flex flex-col justify-between pt-24 sm:pt-28 lg:pt-32 pb-10 sm:pb-14 w-full max-w-full text-white">
+    <div className="relative min-h-[85vh] lg:min-h-[90vh] bg-gradient-to-br from-[#1e1b3a] via-[#241e4a] to-[#2d2560] overflow-hidden flex flex-col justify-between pt-16 md:pt-20 pb-10 sm:pb-14 w-full max-w-full text-white">
       
       {/* ── Background Sacred Atmosphere & Watermark ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
@@ -96,7 +96,7 @@ export default function HeroSanctum({
       </div>
 
       {/* ── Top Scrolling Panchang Marquee Ticker ── */}
-      <div className="absolute top-16 md:top-20 left-0 w-full z-20 bg-[#16142a]/95 backdrop-blur-xl border-b border-[#d4a15a]/20 overflow-hidden">
+      <div className="relative w-full z-20 bg-[#16142a]/95 backdrop-blur-xl border-b border-[#d4a15a]/20 overflow-hidden">
         <div className="relative overflow-hidden py-2 sm:py-2.5">
           <div className="flex animate-marquee whitespace-nowrap">
             {[...Array(2)].map((_, i) => (
@@ -131,7 +131,7 @@ export default function HeroSanctum({
       </div>
 
       {/* ── Main Hero Content Area ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0 mt-6 sm:mt-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0 py-6 sm:py-8 lg:py-10 flex-1 flex flex-col justify-center">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
           {/* Left Column (Headline, Tagline, CTAs, Trust Row) */}
