@@ -18,16 +18,35 @@ export default function Navbar({
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  const [scrolledPastHero, setScrolledPastHero] = useState(false);
+  const [isDarkHero, setIsDarkHero] = useState(activeTab === 'home');
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
-      setScrolledPastHero(window.scrollY > 620);
+
+      if (activeTab === 'home') {
+        const heroEl = document.getElementById('hero-sanctum');
+        if (heroEl) {
+          const rect = heroEl.getBoundingClientRect();
+          const navHeight = window.innerWidth >= 768 ? 80 : 64;
+          // As long as the bottom of the hero section is below the navbar, navbar stays dark!
+          setIsDarkHero(rect.bottom > navHeight);
+        } else {
+          setIsDarkHero(false);
+        }
+      } else {
+        setIsDarkHero(false);
+      }
     };
+
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    window.addEventListener('resize', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [activeTab]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -53,9 +72,6 @@ export default function Navbar({
     { id: 'astro', label: 'Astro Tools' },
     { id: 'store', label: 'Store' },
   ];
-
-  // Dark hero mode when on home tab AND not scrolled past the hero section
-  const isDarkHero = activeTab === 'home' && !scrolledPastHero;
   const navTextColor = isDarkHero ? 'text-ivory-50' : 'text-charcoal-900';
   const navSubTextColor = isDarkHero ? 'text-[#d4a15a]/80' : 'text-charcoal-500';
   const navHoverColor = isDarkHero ? 'hover:text-[#d4a15a]' : 'hover:text-copper-600';

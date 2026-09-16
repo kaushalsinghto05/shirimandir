@@ -58,7 +58,7 @@ export default function HeroSanctum({
   const currentTemple = featuredTemples[activeTempleIndex];
 
   return (
-    <div className="relative min-h-[85vh] lg:min-h-[90vh] bg-gradient-to-br from-[#1e1b3a] via-[#241e4a] to-[#2d2560] overflow-hidden flex flex-col justify-between pt-16 md:pt-20 pb-10 sm:pb-14 w-full max-w-full text-white">
+    <div id="hero-sanctum" className="relative min-h-[80vh] lg:min-h-[85vh] bg-gradient-to-br from-[#1e1b3a] via-[#241e4a] to-[#2d2560] overflow-hidden flex flex-col justify-between pt-16 md:pt-20 pb-8 sm:pb-10 w-full max-w-full text-white">
       
       {/* ── Background Sacred Atmosphere & Watermark ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
@@ -138,20 +138,20 @@ export default function HeroSanctum({
           <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left min-w-0 animate-fade-in-up">
             
             {/* Brand Moniker & Tagline */}
-            <div className="flex items-center gap-2 text-[11px] sm:text-xs font-semibold tracking-widest text-[#d4a15a]/80 uppercase mb-3">
+            <div className="flex items-center gap-2 text-[11px] sm:text-xs font-semibold tracking-widest text-[#d4a15a]/80 uppercase mb-2 sm:mb-2.5">
               <span>Shiri Mandir</span>
               <span className="text-[#d4a15a]/40">•</span>
               <span>Sacred Temples • Verified Sevas</span>
             </div>
 
             {/* Pill-shaped Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[#d4a15a]/40 bg-[#d4a15a]/10 text-[#f5d89f] text-[11px] sm:text-xs font-semibold uppercase tracking-wider mb-5 sm:mb-6 shadow-[0_0_15px_rgba(212,161,90,0.15)] backdrop-blur-sm max-w-full">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full border border-[#d4a15a]/40 bg-[#d4a15a]/10 text-[#f5d89f] text-[11px] sm:text-xs font-semibold uppercase tracking-wider mb-3.5 sm:mb-5 shadow-[0_0_15px_rgba(212,161,90,0.15)] backdrop-blur-sm max-w-full">
               <Sparkles className="w-3.5 h-3.5 text-[#d4a15a] animate-pulse-slow flex-shrink-0" />
               <span className="truncate">✨ VEDIC TEMPLE TRADITION REIMAGINED</span>
             </div>
 
             {/* Large Serif Headline (2 lines with gold keyword) */}
-            <h1 className="font-display text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.14] sm:leading-[1.12] mb-4 sm:mb-6 tracking-tight">
+            <h1 className="font-display text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-[1.15] mb-3 sm:mb-4 tracking-tight">
               Connect With{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4a15a] via-[#f7dfa9] to-[#d4a15a] drop-shadow-[0_2px_12px_rgba(212,161,90,0.35)]">
                 Sacred Traditions
@@ -161,16 +161,16 @@ export default function HeroSanctum({
             </h1>
 
             {/* Supporting Subtext */}
-            <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-xl mb-7 sm:mb-9 leading-relaxed font-sans font-light">
+            <p className="text-xs sm:text-sm lg:text-base text-slate-300 max-w-xl mb-5 sm:mb-6 leading-relaxed font-sans font-light">
               Experience divine blessings from home. Book authentic pujas with live gotra sankalp recitation, sacred chadhava offerings, and verified temple prasad delivered to your doorstep.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3.5 sm:gap-4 mb-8 sm:mb-10 w-full max-w-md lg:max-w-none">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-6 sm:mb-7 w-full max-w-md lg:max-w-none">
               {/* Primary: Solid Gold Gradient */}
               <button 
                 onClick={onExplorePujas}
-                className="group relative inline-flex items-center justify-center px-7 sm:px-9 py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base text-[#1a1733] bg-gradient-to-r from-[#d4a15a] via-[#e5b76e] to-[#c5914a] hover:from-[#e5b76e] hover:to-[#d4a15a] shadow-[0_4px_25px_rgba(212,161,90,0.35)] hover:shadow-[0_6px_30px_rgba(212,161,90,0.5)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
+                className="group relative inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl font-bold text-sm sm:text-base text-[#1a1733] bg-gradient-to-r from-[#d4a15a] via-[#e5b76e] to-[#c5914a] hover:from-[#e5b76e] hover:to-[#d4a15a] shadow-[0_4px_25px_rgba(212,161,90,0.35)] hover:shadow-[0_6px_30px_rgba(212,161,90,0.5)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
               >
                 <span>Book a Puja</span>
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
@@ -179,7 +179,7 @@ export default function HeroSanctum({
               {/* Secondary: Outlined */}
               <button 
                 onClick={onViewDarshanQueue}
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-semibold text-sm sm:text-base text-white border border-[#d4a15a]/45 hover:bg-[#d4a15a]/15 hover:border-[#d4a15a] transition-all duration-300 backdrop-blur-sm hover:-translate-y-0.5 active:translate-y-0"
+                className="inline-flex items-center justify-center px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base text-white border border-[#d4a15a]/45 hover:bg-[#d4a15a]/15 hover:border-[#d4a15a] transition-all duration-300 backdrop-blur-sm hover:-translate-y-0.5 active:translate-y-0"
               >
                 <span className="relative flex items-center justify-center w-2.5 h-2.5 mr-2.5">
                   <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
@@ -190,7 +190,7 @@ export default function HeroSanctum({
             </div>
 
             {/* Trust Indicators Row with Divider Lines */}
-            <div className="w-full pt-6 border-t border-white/10 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-7">
+            <div className="w-full pt-4 sm:pt-5 border-t border-white/10 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6">
               {/* 500+ Temples */}
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#d4a15a]/15 border border-[#d4a15a]/25 flex items-center justify-center text-[#d4a15a]">
@@ -314,13 +314,13 @@ export default function HeroSanctum({
         </div>
 
         {/* ── Deity Filter Navigation ── */}
-        <div className="w-full max-w-full overflow-x-auto scrollbar-hide pt-10 sm:pt-14 pb-2 snap-x-mandatory min-w-0">
+        <div className="w-full max-w-full overflow-x-auto scrollbar-hide pt-5 sm:pt-7 pb-2 snap-x-mandatory min-w-0">
           <div className="flex items-center justify-start sm:justify-center space-x-2 sm:space-x-3 w-max mx-auto px-4">
             {deities.map(deity => (
               <button
                 key={deity}
                 onClick={() => setSelectedDeityFilter?.(deity)}
-                className={`snap-center px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+                className={`snap-center px-4 py-1.5 sm:px-5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${
                   selectedDeityFilter === deity 
                     ? 'bg-gradient-to-r from-[#d4a15a] to-[#c28e46] text-[#1a1733] shadow-[0_0_20px_rgba(212,161,90,0.35)] font-bold scale-105' 
                     : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10 hover:border-[#d4a15a]/40'
@@ -333,8 +333,8 @@ export default function HeroSanctum({
         </div>
 
         {/* ── Featured Press / Devotee Trust Bar ── */}
-        <div className="w-full mt-8 sm:mt-12 min-w-0 text-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 uppercase tracking-[0.25em] mb-4 sm:mb-6 font-medium">
+        <div className="w-full mt-5 sm:mt-7 min-w-0 text-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 uppercase tracking-[0.25em] mb-3 sm:mb-4 font-medium">
             Trusted By Devotees Across India • Featured In
           </p>
           <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8 md:gap-14 opacity-50 hover:opacity-75 grayscale hover:grayscale-0 transition-all duration-500 px-4">
@@ -347,6 +347,9 @@ export default function HeroSanctum({
         </div>
 
       </div>
+
+      {/* Subtle bottom gradient to blend gracefully into the next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-black/20 pointer-events-none" />
 
     </div>
   );
