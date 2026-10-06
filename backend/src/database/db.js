@@ -1,0 +1,96 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import pg from 'pg';
+import { DatabaseSync } from 'node:sqlite';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const isPostgres = Boolean(process.env.DATABASE_URL);
+let pgPool = null;
+let sqliteDb = null;
+
+if (isPostgres) {
+  pgPool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  });
+} else {
+  // Local SQLite database file in backend root or local data directory
+  const dbDir = path.join(__dirname, '../../data');
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
+  const dbPath = path.join(dbDir, 'shirimandir.sqlite');
+  sqliteDb = new DatabaseSync(dbPath);
+  sqliteDb.exec('PRAGMA foreign_keys = ON;');
+}
+
+/**
+ * Universal Query Runner
+ * Handles parameter translation: converts $1, $2, ... to ? for SQLite.
+ */
+export async function query(sqlText, params = []) {
+  if (isPostgres) {
+    const res = await pgPool.query(sqlText, params);
+    return { rows: res.rows, rowCount: res.rowCount };
+  }
+
+  // SQLite execution
+  try {
+    // Translate $1, $2 to ? for compatibility
+    const translatedSql = sqlText.replace(/\$(\d+)/g, '?');
+    const trimmed = translatedSql.trim();
+    const isSelect = /^SELECT|^PRAGMA/i.test(trimmed);
+
+    // Prepare statement
+    const stmt = sqliteDb.prepare(translatedSql);
+
+    if (isSelect) {
+      const rows = stmt.all(...params);
+      return { rows, rowCount: rows.length };
+    } else {
+      const result = stmt.run(...params);
+      // If statement has RETURNING clause, try to emulate or fetch
+      if (/RETURNING/i.test(translatedSql)) {
+        // If RETURNING id is used on INSERT
+        const lastId = result.lastInsertRowid;
+        return {
+          rows: [{ id: Number(lastId) }],
+          rowCount: result.changes,
+          lastInsertRowid: Number(lastId)
+        };
+      }
+      return {
+        rows: [],
+        rowCount: result.changes,
+        lastInsertRowid: Number(result.lastInsertRowid)
+      };
+    }
+  } catch (err) {
+    console.error('Database query error:', err.message, '\nSQL:', sqlText, '\nParams:', params);
+    throw err;
+  }
+}
+
+/**
+ * Initialize Database Tables
+ */
+export async function initDb() {
+  if (isPostgres) {
+    const schemaPath = path.join(__dirname, 'schema.sql');
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    await pgPool.query(schemaSql);
+    console.log('PostgreSQL schema verified and applied.');
+  } else {
+    const schemaPath = path.join(__dirname, 'schema_sqlite.sql');
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    sqliteDb.exec(schemaSql);
+    console.log('SQLite schema verified and applied successfully.');
+  }
+}
+
+export function getDbEngine() {
+  return isPostgres ? 'postgresql' : 'sqlite';
+}

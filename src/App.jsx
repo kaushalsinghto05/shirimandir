@@ -23,7 +23,7 @@ import WishlistDrawer from './components/WishlistDrawer';
 import AdminDashboard from './components/AdminDashboard';
 import PanchangModal from './components/PanchangModal';
 import DevotionalLibraryModal from './components/DevotionalLibraryModal';
-import StoreModal from './components/StoreModal';
+import PrasadCheckoutModal from './components/PrasadCheckoutModal';
 import Footer from './components/Footer';
 import { TEMPLES, FEATURED_PUJAS } from './data/mockData';
 
@@ -33,7 +33,17 @@ export default function App() {
   const [isAdminMode, setIsAdminMode] = useState(false);
 
   // Devotee Authentication State
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState({
+    id: 1,
+    name: 'Kaushal Singh',
+    email: 'kaushal@example.com',
+    phone: '+91 98765 43210',
+    gotra: 'Kashyap',
+    rashi: 'Dhanu',
+    nakshatra: 'Moola',
+    role: 'devotee',
+    consent_data_sharing: false
+  });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [pendingServiceToBookAfterLogin, setPendingServiceToBookAfterLogin] = useState(null);
 
@@ -41,16 +51,59 @@ export default function App() {
   const [wishlist, setWishlist] = useState(() => {
     try {
       const saved = localStorage.getItem('shirimandir_wishlist');
-      return saved ? JSON.parse(saved) : ['kashi-vishwanath', 'kedarnath-dham'];
+      return saved ? JSON.parse(saved) : ['kashi-vishwanath', 'tirupati-balaji'];
     } catch {
-      return ['kashi-vishwanath', 'kedarnath-dham'];
+      return ['kashi-vishwanath', 'tirupati-balaji'];
     }
   });
-
   const [wishlistDrawerOpen, setWishlistDrawerOpen] = useState(false);
 
+  // Sacred Prasad Cart & Checkout State
+  const [prasadCart, setPrasadCart] = useState([
+    {
+      id: 1,
+      name: 'Kashi Vishwanath Sacred Peda & Dry Fruit Mahaprasad Box (400g)',
+      temple: 'Shri Kashi Vishwanath Temple',
+      price: 450,
+      price_paise: 45000,
+      stock_qty: 120,
+      quantity: 1,
+      fssai_license_no: '12723999000142',
+      image: 'https://images.unsplash.com/photo-1599785209707-a456fc1337bb?auto=format&fit=crop&w=600&q=80'
+    }
+  ]);
+  const [prasadCheckoutOpen, setPrasadCheckoutOpen] = useState(false);
+
   // Temple Directory & Live Queue Telemetry State
-  const [templesData, setTemplesData] = useState(TEMPLES);
+  const [templesData, setTemplesData] = useState(() => {
+    // Enrich with statutory verification status
+    return TEMPLES.map(t => {
+      let status = 'independent';
+      let doc = null;
+      let regNo = null;
+
+      if (t.id === 'kashi-vishwanath') {
+        status = 'official';
+        doc = 'https://storage.shirimandir.org/compliance/docs/kashi_vishwanath_trust_mou_2024.pdf';
+        regNo = 'TRUST-KV-UP-7819';
+      } else if (t.id === 'tirupati-balaji') {
+        status = 'partnered';
+        doc = 'https://storage.shirimandir.org/compliance/docs/tirumala_archaka_seva_agreement_2024.pdf';
+        regNo = 'AP-TTD-ARCH-2023';
+      } else if (t.id === 'siddhivinayak-mumbai') {
+        status = 'independent';
+        regNo = 'MH-BOM-TRUST-1801';
+      }
+
+      return {
+        ...t,
+        verification_status: status,
+        affiliation_proof_doc: doc,
+        trust_registration_no: regNo
+      };
+    });
+  });
+
   const [activeTempleModal, setActiveTempleModal] = useState(null);
   const [selectedDeityFilter, setSelectedDeityFilter] = useState('all');
 
@@ -64,7 +117,6 @@ export default function App() {
   const [panchangModalOpen, setPanchangModalOpen] = useState(false);
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [astroModalOpen, setAstroModalOpen] = useState(false);
-  const [storeModalOpen, setStoreModalOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -85,6 +137,18 @@ export default function App() {
 
   const handleRemoveFromWishlist = (templeId) => {
     setWishlist(wishlist.filter(id => id !== templeId));
+  };
+
+  // Add to Prasad Cart Handler
+  const handleAddToCart = (item) => {
+    setPrasadCart(prev => {
+      const existing = prev.find(i => i.id === item.id);
+      if (existing) {
+        return prev.map(i => i.id === item.id ? { ...i, quantity: (i.quantity || 1) + 1 } : i);
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
+    setPrasadCheckoutOpen(true);
   };
 
   // Login & Booking Gate Enforcement
@@ -132,6 +196,7 @@ export default function App() {
         return {
           ...t,
           waitMinutes: newMinutes,
+          current_wait_minutes: newMinutes,
           waitStatus: newMinutes > 30 ? 'Peak Rush' : newMinutes > 20 ? 'Moderate Queue' : 'Smooth Darshan'
         };
       }
@@ -153,21 +218,12 @@ export default function App() {
       setAstroModalOpen(true);
       return;
     }
-    if (tabId === 'store') {
-      setStoreModalOpen(true);
+    if (tabId === 'store' || tabId === 'prasad') {
+      setPrasadCheckoutOpen(true);
       return;
     }
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Share Experience handler (Sanatan Wall)
-  const handleShareExperience = () => {
-    if (!user) {
-      setLoginModalOpen(true);
-    } else {
-      alert('Thank you! Your experience has been shared with the Sanatan community. 🙏');
-    }
   };
 
   return (
@@ -197,7 +253,7 @@ export default function App() {
           />
         ) : activeTab === 'account' ? (
           <UserAccountDashboard
-            user={user || { name: "Kaushal Singh", gotra: "Kashyap", phone: "+91 98765 43210", rashi: "Dhanu" }}
+            user={user}
             onOpenReceipt={(rcp) => setReceiptModalData(rcp)}
             wishlist={wishlist}
             temples={templesData}
@@ -228,7 +284,7 @@ export default function App() {
              HOMEPAGE — Full Landing Page Section Flow
              ═══════════════════════════════════════════════ */
           <>
-            {/* 1. Hero — Bold headline, CTAs, trust stats, deity filter */}
+            {/* 1. Hero — Bold headline, CTAs, trust stats, floating cards */}
             <HeroSanctum
               onExplorePujas={() => {
                 const el = document.getElementById('pujas-section');
@@ -242,7 +298,7 @@ export default function App() {
               setSelectedDeityFilter={setSelectedDeityFilter}
             />
 
-            {/* 2. Verified Temple Trust Badges — transparency layer */}
+            {/* 2. Verified Temple Trust Badges — Statutory transparency layer */}
             <VerifiedTrustBadges temples={templesData} />
 
             {/* 3. Live Darshan Queue & Wait-Time Gauge */}
@@ -253,7 +309,7 @@ export default function App() {
               onToggleWishlist={handleToggleWishlist}
             />
 
-            {/* 4. Gotra-Personalized Puja Section */}
+            {/* 4. Puja Offerings Section */}
             <div id="pujas-section">
               <FeaturedPujasSection
                 onBookPuja={handleInitiateBooking}
@@ -266,28 +322,28 @@ export default function App() {
               onBookGuidedDarshan={handleInitiateBooking}
             />
 
-            {/* 6. Yatra Packages — Multi-day pilgrimages */}
+            {/* 6. Yatra Packages */}
             <YatraPackagesSection
               onBookYatra={handleInitiateBooking}
             />
 
-            {/* 7. Sacred Chadhava & Prasadam with delivery tracker */}
+            {/* 7. Sacred Chadhava & Prasadam */}
             <ChadhavaSection
               onOfferChadhava={handleInitiateBooking}
             />
 
-            {/* 8. Vedic Astro Tools — Inline section on homepage */}
+            {/* 8. Vedic Astro Tools */}
             <AstroToolsModal isInline={true} />
 
-            {/* 9. Sanatan Wall — Community devotee feed */}
+            {/* 9. Sanatan Community Wall */}
             <SanatanWallSection
-              onShareExperience={handleShareExperience}
+              onShareExperience={() => alert('Thank you! Your experience has been shared with the community. 🙏')}
             />
 
-            {/* 10. Testimonials + Press credibility strip */}
+            {/* 10. Testimonials */}
             <TestimonialSection />
 
-            {/* 11. Referral / Community program */}
+            {/* 11. Referral & Community program */}
             <ReferralSection />
           </>
         )}
@@ -305,10 +361,11 @@ export default function App() {
         <TempleDetailModal
           temple={activeTempleModal}
           onClose={() => setActiveTempleModal(null)}
-          onBookSeva={(seva) => {
+          onBookService={(seva) => {
             setActiveTempleModal(null);
             handleInitiateBooking(seva);
           }}
+          onAddToCart={handleAddToCart}
           wishlist={wishlist}
           onToggleWishlist={handleToggleWishlist}
         />
@@ -321,7 +378,7 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
-      {/* Puja / Chadhava Booking Flow */}
+      {/* Puja / Seva Booking Flow */}
       {activeBookingService && (
         <PujaBookingModal
           service={activeBookingService}
@@ -331,7 +388,7 @@ export default function App() {
         />
       )}
 
-      {/* Unified Tabbed Payment Sheet */}
+      {/* Unified Tabbed Payment Modal */}
       {bookingDataForPayment && (
         <UnifiedPaymentModal
           bookingData={bookingDataForPayment}
@@ -340,7 +397,7 @@ export default function App() {
         />
       )}
 
-      {/* Booking Confirmation & Prasad Delivery Tracker */}
+      {/* Booking Confirmation Modal */}
       {confirmationData && (
         <BookingConfirmationModal
           confirmationData={confirmationData}
@@ -353,13 +410,25 @@ export default function App() {
         />
       )}
 
-      {/* 80G Tax Exemption Donation Receipt */}
+      {/* 80G Tax Exemption Receipt Modal */}
       {receiptModalData && (
         <Receipt80GModal
-          receiptData={receiptModalData}
+          booking={receiptModalData}
           onClose={() => setReceiptModalData(null)}
         />
       )}
+
+      {/* Dedicated Prasad Cart & Checkout Modal */}
+      <PrasadCheckoutModal
+        isOpen={prasadCheckoutOpen}
+        onClose={() => setPrasadCheckoutOpen(false)}
+        cart={prasadCart}
+        setCart={setPrasadCart}
+        user={user}
+        onOrderSuccess={(orderData) => {
+          setActiveTab('account');
+        }}
+      />
 
       {/* Multi-Temple Wishlist Drawer */}
       <WishlistDrawer
@@ -367,33 +436,17 @@ export default function App() {
         onClose={() => setWishlistDrawerOpen(false)}
         wishlist={wishlist}
         temples={templesData}
-        onRemoveFromWishlist={handleRemoveFromWishlist}
-        onSelectTemple={(temple) => setActiveTempleModal(temple)}
+        onRemove={handleRemoveFromWishlist}
+        onSelectTemple={(temple) => {
+          setWishlistDrawerOpen(false);
+          setActiveTempleModal(temple);
+        }}
       />
 
-      {/* Panchang Modal */}
-      <PanchangModal
-        isOpen={panchangModalOpen}
-        onClose={() => setPanchangModalOpen(false)}
-      />
-
-      {/* Devotional Library Modal */}
-      <DevotionalLibraryModal
-        isOpen={libraryModalOpen}
-        onClose={() => setLibraryModalOpen(false)}
-      />
-
-      {/* Astro Tools Modal (when opened from nav) */}
-      <AstroToolsModal
-        isOpen={astroModalOpen}
-        onClose={() => setAstroModalOpen(false)}
-      />
-
-      {/* Store Modal */}
-      <StoreModal
-        isOpen={storeModalOpen}
-        onClose={() => setStoreModalOpen(false)}
-      />
+      {/* Secondary Tool Modals */}
+      <PanchangModal isOpen={panchangModalOpen} onClose={() => setPanchangModalOpen(false)} />
+      <DevotionalLibraryModal isOpen={libraryModalOpen} onClose={() => setLibraryModalOpen(false)} />
+      <AstroToolsModal isOpen={astroModalOpen} onClose={() => setAstroModalOpen(false)} />
 
     </div>
   );
