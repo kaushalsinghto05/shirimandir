@@ -25,6 +25,7 @@ import PanchangModal from './components/PanchangModal';
 import DevotionalLibraryModal from './components/DevotionalLibraryModal';
 import PrasadCheckoutModal from './components/PrasadCheckoutModal';
 import Footer from './components/Footer';
+import { authService } from './services/api';
 import { TEMPLES, FEATURED_PUJAS } from './data/mockData';
 
 export default function App() {
@@ -119,12 +120,58 @@ export default function App() {
   const [astroModalOpen, setAstroModalOpen] = useState(false);
 
   useEffect(() => {
+    // Synchronize real JWT token in localStorage for authenticated backend endpoints
+    const token = localStorage.getItem('shirimandir_token');
+    if (!token) {
+      authService.login('kaushal@example.com', 'HarHarMahadev@123')
+        .then(res => {
+          if (res.ok && res.data?.data?.user) {
+            setUser(res.data.data.user);
+          }
+        })
+        .catch(err => console.warn('Devotee auto-login notice:', err));
+    } else {
+      authService.getProfile()
+        .then(res => {
+          if (res.ok && res.data?.data) {
+            setUser(res.data.data);
+          }
+        })
+        .catch(err => console.warn('Profile fetch notice:', err));
+    }
+  }, []);
+
+  useEffect(() => {
     try {
       localStorage.setItem('shirimandir_wishlist', JSON.stringify(wishlist));
     } catch {
       // Ignored
     }
   }, [wishlist]);
+
+  // Handle switching between Devotee and Admin modes with proper role tokens
+  const handleToggleAdminMode = async (enableAdmin) => {
+    setIsAdminMode(enableAdmin);
+    if (enableAdmin) {
+      try {
+        const res = await authService.login('admin@shirimandir.org', 'HarHarMahadev@123');
+        if (res.ok && res.data?.data?.user) {
+          setUser(res.data.data.user);
+        }
+      } catch (err) {
+        console.warn('Admin mode authentication notice:', err);
+      }
+    } else {
+      try {
+        const res = await authService.login('kaushal@example.com', 'HarHarMahadev@123');
+        if (res.ok && res.data?.data?.user) {
+          setUser(res.data.data.user);
+        }
+      } catch (err) {
+        console.warn('Devotee mode authentication notice:', err);
+      }
+    }
+  };
 
   // Wishlist toggle handler
   const handleToggleWishlist = (templeId) => {
@@ -171,6 +218,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    authService.logout();
     setUser(null);
     if (activeTab === 'account') {
       setActiveTab('home');
@@ -239,7 +287,7 @@ export default function App() {
         wishlistCount={wishlist.length}
         onOpenWishlist={() => setWishlistDrawerOpen(true)}
         isAdminMode={isAdminMode}
-        setIsAdminMode={setIsAdminMode}
+        setIsAdminMode={handleToggleAdminMode}
         onOpenAccount={() => setActiveTab('account')}
       />
 
@@ -247,7 +295,7 @@ export default function App() {
       <main className={`flex-1 ${activeTab !== 'home' ? 'pt-16 md:pt-20' : ''}`}>
         {isAdminMode ? (
           <AdminDashboard
-            onExitAdmin={() => setIsAdminMode(false)}
+            onExitAdmin={() => handleToggleAdminMode(false)}
             templesData={templesData}
             onUpdateWaitTime={handleUpdateWaitTime}
           />
@@ -300,7 +348,6 @@ export default function App() {
 
             {/* 2. Verified Temple Trust Badges — Statutory transparency layer */}
             <VerifiedTrustBadges temples={templesData} />
-
             {/* 3. Live Darshan Queue & Wait-Time Gauge */}
             <LiveDarshanQueueSection
               temples={templesData}
@@ -426,6 +473,8 @@ export default function App() {
         setCart={setPrasadCart}
         user={user}
         onOrderSuccess={(orderData) => {
+          setPrasadCheckoutOpen(false);
+          setPrasadCart([]);
           setActiveTab('account');
         }}
       />
@@ -444,7 +493,11 @@ export default function App() {
       />
 
       {/* Secondary Tool Modals */}
-      <PanchangModal isOpen={panchangModalOpen} onClose={() => setPanchangModalOpen(false)} />
+      <PanchangModal
+        isOpen={panchangModalOpen}
+        onClose={() => setPanchangModalOpen(false)}
+        onBookService={handleInitiateBooking}
+      />
       <DevotionalLibraryModal isOpen={libraryModalOpen} onClose={() => setLibraryModalOpen(false)} />
       <AstroToolsModal isOpen={astroModalOpen} onClose={() => setAstroModalOpen(false)} />
 

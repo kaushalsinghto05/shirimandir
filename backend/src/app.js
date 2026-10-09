@@ -4,16 +4,8 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
 import { config } from './config/index.js';
-
-import authRoutes from './routes/authRoutes.js';
-import templeRoutes from './routes/templeRoutes.js';
-import pujaRoutes from './routes/pujaRoutes.js';
-import prasadRoutes from './routes/prasadRoutes.js';
-import bookingRoutes from './routes/bookingRoutes.js';
-import orderRoutes from './routes/orderRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
-import refundRoutes from './routes/refundRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
+import { registerModules, ModulithManifest } from './modules/index.js';
+import { errorHandler, notFoundHandler } from './core/middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,7 +18,7 @@ app.use(cors({
   credentials: true
 }));
 
-// Capture raw body for HMAC signature verification in webhooks
+// Capture raw body for HMAC SHA-256 signature verification in payment webhooks
 app.use(express.json({
   verify: (req, res, buf) => {
     req.rawBody = buf.toString('utf8');
@@ -39,20 +31,24 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsDir = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsDir));
 
-// Health check endpoint
+// Health check endpoint with Modulith architecture telemetry
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     platform: 'Shiri Mandir Backend API',
+    architecture: 'Modular Monolith (Modulith)',
     version: '1.0.0',
+    modules: ModulithManifest.map(m => m.name),
     timestamp: new Date().toISOString()
   });
 });
 
-// Complete API Route Manifest
+// Complete API Route Manifest & Architecture Documentation
 app.get('/api/docs', (req, res) => {
   res.json({
     platform: 'Shiri Mandir REST API Documentation',
+    architecture: 'Modular Monolith (Modulith)',
+    modules: ModulithManifest,
     compliance_standards: [
       'temples.verification_status strictly requires signed affiliation_proof_doc for partnered/official tiers',
       'prasad_items.fssai_license_no strictly mandatory for edible offerings; remains inactive until admin approved',
@@ -63,50 +59,45 @@ app.get('/api/docs', (req, res) => {
       'refund_requests auto-enforces cancellation policies based on scheduled puja hours and dispatch state'
     ],
     routes: [
-      { method: 'POST', path: '/api/auth/register', description: 'Devotee registration with consent opt-in' },
-      { method: 'POST', path: '/api/auth/login', description: 'Authentication and JWT token issuance' },
-      { method: 'GET', path: '/api/auth/me', description: 'Get authenticated devotee profile' },
-      { method: 'PUT', path: '/api/auth/consent', description: 'Toggle devotee data sharing consent' },
-      { method: 'GET', path: '/api/temples', description: 'List temples with deity, state, verification filters' },
-      { method: 'GET', path: '/api/temples/:slug', description: 'Temple details, live queue, pujas, and prasad' },
-      { method: 'POST', path: '/api/temples', description: 'Create temple (requires affiliation doc for partnered/official)' },
-      { method: 'PUT', path: '/api/temples/:id/verification', description: 'Admin verification & affiliation approval' },
-      { method: 'GET', path: '/api/pujas', description: 'List pujas by category, temple, deity' },
-      { method: 'GET', path: '/api/pujas/:id', description: 'Puja details and family/individual packages' },
-      { method: 'GET', path: '/api/prasad', description: 'Active prasad store with real inventory & FSSAI licenses' },
-      { method: 'GET', path: '/api/prasad/:id', description: 'Prasad item details' },
-      { method: 'POST', path: '/api/prasad', description: 'Register prasad offering (mandatory FSSAI for food)' },
-      { method: 'PUT', path: '/api/prasad/:id/approve-fssai', description: 'Admin FSSAI verification & publishing' },
-      { method: 'POST', path: '/api/bookings', description: 'Create puja booking with itemized breakdown in paise' },
-      { method: 'GET', path: '/api/bookings/my', description: 'Devotee bookings with proof-of-service media' },
-      { method: 'GET', path: '/api/bookings/:id', description: 'Booking details (with privacy mask if unconsented)' },
-      { method: 'PUT', path: '/api/bookings/:id/proof', description: 'Priest proof media upload to complete puja' },
-      { method: 'POST', path: '/api/orders/calculate', description: 'Pre-checkout itemized calculation with zero hidden fees' },
-      { method: 'POST', path: '/api/orders', description: 'Create order with atomic stock deduction' },
-      { method: 'GET', path: '/api/orders/my', description: 'Devotee prasad orders and tracking' },
-      { method: 'POST', path: '/api/payments/intent', description: 'Create pending payment session' },
-      { method: 'POST', path: '/api/payments/webhook', description: 'Server-side HMAC SHA-256 webhook signature validation' },
-      { method: 'POST', path: '/api/payments/simulate-webhook', description: 'Local test harness for webhook validation' },
-      { method: 'GET', path: '/api/refunds/policy', description: 'Pre-payment cancellation policy disclosure' },
-      { method: 'POST', path: '/api/refunds/request', description: 'File refund with auto-enforced eligibility calculation' },
-      { method: 'GET', path: '/api/refunds/my', description: 'Devotee refund request history' },
-      { method: 'GET', path: '/api/admin/metrics', description: 'Admin overview: bookings, FSSAI queue, proof audit' },
-      { method: 'GET', path: '/api/admin/refunds', description: 'Admin refund request queue' },
-      { method: 'PUT', path: '/api/admin/refunds/:id/review', description: 'Approve or reject refund request' }
+      { method: 'POST', path: '/api/auth/register', description: 'Devotee registration with consent opt-in', module: 'identity' },
+      { method: 'POST', path: '/api/auth/login', description: 'Authentication and JWT token issuance', module: 'identity' },
+      { method: 'GET', path: '/api/auth/me', description: 'Get authenticated devotee profile', module: 'identity' },
+      { method: 'PUT', path: '/api/auth/consent', description: 'Toggle devotee data sharing consent', module: 'identity' },
+      { method: 'GET', path: '/api/temples', description: 'List temples with deity, state, verification filters', module: 'temple' },
+      { method: 'GET', path: '/api/temples/:slug', description: 'Temple details, live queue, pujas, and prasad', module: 'temple' },
+      { method: 'POST', path: '/api/temples', description: 'Create temple (requires affiliation doc for partnered/official)', module: 'temple' },
+      { method: 'PUT', path: '/api/temples/:id/verification', description: 'Admin verification & affiliation approval', module: 'temple' },
+      { method: 'GET', path: '/api/pujas', description: 'List pujas by category, temple, deity', module: 'puja' },
+      { method: 'GET', path: '/api/pujas/:id', description: 'Puja details and family/individual packages', module: 'puja' },
+      { method: 'GET', path: '/api/prasad', description: 'Active prasad store with real inventory & FSSAI licenses', module: 'prasad' },
+      { method: 'GET', path: '/api/prasad/:id', description: 'Prasad item details', module: 'prasad' },
+      { method: 'POST', path: '/api/prasad', description: 'Register prasad offering (mandatory FSSAI for food)', module: 'prasad' },
+      { method: 'PUT', path: '/api/prasad/:id/approve-fssai', description: 'Admin FSSAI verification & publishing', module: 'prasad' },
+      { method: 'POST', path: '/api/bookings', description: 'Create puja booking with itemized breakdown in paise', module: 'booking' },
+      { method: 'GET', path: '/api/bookings/my', description: 'Devotee bookings with proof-of-service media', module: 'booking' },
+      { method: 'GET', path: '/api/bookings/:id', description: 'Booking details (with privacy mask if unconsented)', module: 'booking' },
+      { method: 'PUT', path: '/api/bookings/:id/proof', description: 'Priest proof media upload to complete puja', module: 'booking' },
+      { method: 'POST', path: '/api/orders/calculate', description: 'Pre-checkout itemized calculation with zero hidden fees', module: 'order' },
+      { method: 'POST', path: '/api/orders', description: 'Create order with atomic stock deduction', module: 'order' },
+      { method: 'GET', path: '/api/orders/my', description: 'Devotee prasad orders and tracking', module: 'order' },
+      { method: 'POST', path: '/api/payments/intent', description: 'Create pending payment session', module: 'payment' },
+      { method: 'POST', path: '/api/payments/verify', description: 'Direct checkout verification with HMAC SHA-256 validation', module: 'payment' },
+      { method: 'POST', path: '/api/payments/webhook', description: 'Server-side HMAC SHA-256 webhook signature validation', module: 'payment' },
+      { method: 'POST', path: '/api/payments/simulate-webhook', description: 'Local test harness for webhook validation', module: 'payment' },
+      { method: 'GET', path: '/api/payments/my', description: 'Devotee payment and transaction history', module: 'payment' },
+      { method: 'GET', path: '/api/payments/:payment_code', description: 'Get payment status and server verification details', module: 'payment' },
+      { method: 'GET', path: '/api/refunds/policy', description: 'Pre-payment cancellation policy disclosure', module: 'refund' },
+      { method: 'POST', path: '/api/refunds/request', description: 'File refund with auto-enforced eligibility calculation', module: 'refund' },
+      { method: 'GET', path: '/api/refunds/my', description: 'Devotee refund request history', module: 'refund' },
+      { method: 'GET', path: '/api/admin/metrics', description: 'Admin overview: bookings, FSSAI queue, proof audit', module: 'admin' },
+      { method: 'GET', path: '/api/admin/refunds', description: 'Admin refund request queue', module: 'admin' },
+      { method: 'PUT', path: '/api/admin/refunds/:id/review', description: 'Approve or reject refund request', module: 'admin' }
     ]
   });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/temples', templeRoutes);
-app.use('/api/pujas', pujaRoutes);
-app.use('/api/prasad', prasadRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/refunds', refundRoutes);
-app.use('/api/admin', adminRoutes);
+// Mount all Modulith domain modules & event bus subscriptions
+registerModules(app);
 
 // Full-Stack Static Production Asset Serving (Render single web-service deployment)
 const possibleDistPaths = [
@@ -136,20 +127,9 @@ if (activeDistPath) {
 }
 
 // 404 Route Handler for unmatched API routes
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: `Cannot ${req.method} ${req.originalUrl} - Route not found`
-  });
-});
+app.use(notFoundHandler);
 
-// Global Error Handler
-app.use((err, req, res, next) => {
-  console.error('Unhandled Server Error:', err);
-  res.status(err.status || 500).json({
-    success: false,
-    error: err.message || 'Internal Server Error'
-  });
-});
+// Centralized Modulith Error Handler
+app.use(errorHandler);
 
 export default app;

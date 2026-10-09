@@ -9,7 +9,15 @@ const SACRED_ADDONS = [
 
 export default function PujaBookingModal({ service, user, onClose, onProceedToPayment }) {
   const [step, setStep] = useState(1); // 1 = Package, 2 = Sankalp & Consent, 3 = Itemized Breakdown & Policy Acceptance
-  const [selectedPackage, setSelectedPackage] = useState(service?.packages?.[0] || null);
+  const availablePackages = (service?.packages && service.packages.length > 0)
+    ? service.packages
+    : [
+        { id: 1, name: 'Single Devotee Sankalp', description: 'Puja consecrated for one devotee name & gotra', price: service?.price || 1100, members: 1 },
+        { id: 2, name: 'Dampati (Couple) Sankalp', description: 'Performed for husband and wife with sacred dhaga', price: Math.round((service?.price || 1100) * 1.8), members: 2 },
+        { id: 3, name: 'Sampoorna Parivar (Family of 4)', description: 'Joint family sankalp with names & nakshatras', price: Math.round((service?.price || 1100) * 2.8), members: 4 }
+      ];
+
+  const [selectedPackage, setSelectedPackage] = useState(availablePackages[0]);
   
   // Devotee details
   const [devoteeDetails, setDevoteeDetails] = useState({
@@ -117,11 +125,7 @@ export default function PujaBookingModal({ service, user, onClose, onProceedToPa
                   Select Seva Package Tier
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {(service.packages && service.packages.length > 0 ? service.packages : [
-                    { id: '1', name: 'Single Devotee Sankalp', description: 'Puja consecrated for one devotee name & gotra', price: 1100, members: 1 },
-                    { id: '2', name: 'Dampati (Couple) Sankalp', description: 'Performed for husband and wife with sacred dhaga', price: 2100, members: 2 },
-                    { id: '3', name: 'Sampoorna Parivar (Family of 4)', description: 'Joint family sankalp with names & nakshatras', price: 3500, members: 4 }
-                  ]).map(pkg => (
+                  {availablePackages.map(pkg => (
                     <div 
                       key={pkg.id} 
                       onClick={() => setSelectedPackage(pkg)}

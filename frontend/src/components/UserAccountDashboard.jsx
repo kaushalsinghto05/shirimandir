@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import ProofMediaViewerModal from './ProofMediaViewerModal';
 import RefundRequestModal from './RefundRequestModal';
-import { authService } from '../services/api';
+import { authService, bookingService, orderService, refundService } from '../services/api';
 
 export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, temples, onSelectTemple }) {
   const [activeTab, setActiveTab] = useState('bookings'); // 'bookings', 'orders', 'refunds', 'privacy'
@@ -85,6 +85,33 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
       created_at: '2026-10-06'
     }
   ]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDevoteeRecords() {
+      try {
+        const [bRes, oRes, rRes] = await Promise.all([
+          bookingService.getMyBookings(),
+          orderService.getMyOrders(),
+          refundService.getMyRefunds()
+        ]);
+        if (!isMounted) return;
+        if (bRes.ok && Array.isArray(bRes.data?.data) && bRes.data.data.length > 0) {
+          setBookings(bRes.data.data);
+        }
+        if (oRes.ok && Array.isArray(oRes.data?.data) && oRes.data.data.length > 0) {
+          setOrders(oRes.data.data);
+        }
+        if (rRes.ok && Array.isArray(rRes.data?.data) && rRes.data.data.length > 0) {
+          setRefundRequests(rRes.data.data);
+        }
+      } catch (err) {
+        console.warn('Devotee live sync notice:', err.message);
+      }
+    }
+    loadDevoteeRecords();
+    return () => { isMounted = false; };
+  }, [user]);
 
   const handleToggleConsent = async () => {
     const nextVal = !consentOptIn;

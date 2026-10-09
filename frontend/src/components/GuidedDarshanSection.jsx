@@ -28,7 +28,7 @@ const GuidedDarshanSection = ({ onBookGuidedDarshan }) => {
                   Digital info pack with map, timings, and rules. Navigate on your own.
                 </p>
                 <button 
-                  onClick={() => onBookGuidedDarshan('self-guided')}
+                  onClick={() => alert('Digital Pilgrim Guide downloaded: includes temple maps, timing schedules, and ritual guidelines. 🙏')}
                   className="w-full py-2.5 rounded-xl border-2 border-sage-400 text-sage-600 font-semibold font-sans hover:bg-sage-100 transition-all duration-300 focus:ring-2 focus:ring-sage-400/50 focus:ring-offset-2"
                 >
                   Download Info Pack
@@ -48,7 +48,18 @@ const GuidedDarshanSection = ({ onBookGuidedDarshan }) => {
                   A local Pandit walks with you, manages offerings, and explains significance.
                 </p>
                 <button 
-                  onClick={() => onBookGuidedDarshan('accompanied')}
+                  onClick={() => onBookGuidedDarshan && onBookGuidedDarshan({
+                    id: 1,
+                    name: 'Accompanied Pandit Ji Darshan Assistance',
+                    title: 'Accompanied Pandit Ji Darshan Assistance',
+                    temple: 'Shri Kashi Vishwanath Temple',
+                    temple_name: 'Shri Kashi Vishwanath Temple',
+                    price: 1501,
+                    packages: [
+                      { id: 1, name: 'Single Pilgrim Guide', price: 1501, members: 1, description: 'Dedicated Vedic Archaka companion throughout sanctum' },
+                      { id: 2, name: 'Family Group Guide (Up to 4)', price: 2501, members: 4, description: 'Dedicated assistance for family group with sanctum offerings' }
+                    ]
+                  })}
                   className="w-full py-2.5 rounded-xl bg-copper-400 text-white font-semibold font-sans shadow-copper-glow hover:bg-copper-500 transition-all duration-300 focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2"
                 >
                   Book Accompanied Darshan
@@ -68,7 +79,18 @@ const GuidedDarshanSection = ({ onBookGuidedDarshan }) => {
                   Skip the main queue. Personal Pandit, special darshan access, and premium prasad.
                 </p>
                 <button 
-                  onClick={() => onBookGuidedDarshan('vip-priority')}
+                  onClick={() => onBookGuidedDarshan && onBookGuidedDarshan({
+                    id: 2,
+                    name: 'VIP Priority Sanctum Darshan & Pandit Seva',
+                    title: 'VIP Priority Sanctum Darshan & Pandit Seva',
+                    temple: 'Shri Kashi Vishwanath Temple',
+                    temple_name: 'Shri Kashi Vishwanath Temple',
+                    price: 3501,
+                    packages: [
+                      { id: 1, name: 'VIP Sanctum Entry (Single)', price: 3501, members: 1, description: 'Fast-track sanctum access with chief archaka seva' },
+                      { id: 2, name: 'VIP Family Sanctum Access (Up to 4)', price: 5501, members: 4, description: 'Special lane priority darshan, dedicated archaka & mahaprasad kit' }
+                    ]
+                  })}
                   className="w-full py-2.5 rounded-xl bg-temple-gold-400 text-charcoal-900 font-semibold font-sans hover:bg-temple-gold-300 transition-all duration-300 focus:ring-2 focus:ring-temple-gold-400/50 focus:ring-offset-2 focus:ring-offset-charcoal-900"
                 >
                   Book VIP Experience

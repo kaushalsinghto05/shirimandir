@@ -93,8 +93,19 @@ export default function ChadhavaSection({ onOfferChadhava }) {
                 <div className="mt-auto flex items-center justify-between pt-3">
                   <span className="font-mono text-sm font-bold text-copper-500">₹{addon.price}</span>
                   <button 
+                    onClick={() => onOfferChadhava && onOfferChadhava({
+                      id: 1,
+                      name: addon.name,
+                      title: addon.name,
+                      temple: 'Sacred Sanctum Offerings',
+                      temple_name: 'Sacred Sanctum Offerings',
+                      price: addon.price,
+                      packages: [
+                        { id: 1, name: addon.name, price: addon.price, members: 1, description: 'Dedicated sanctum aashirwad offering with home delivery of consecrated prasad.' }
+                      ]
+                    })}
                     className="p-1.5 rounded-full bg-ivory-200 text-charcoal-700 hover:bg-copper-100 hover:text-copper-600 transition-colors"
-                    title="Add to offering"
+                    title="Offer this Aashirwad item"
                   >
                     <Plus className="w-4 h-4" />
                   </button>

@@ -25,9 +25,12 @@ export default function UnifiedPaymentModal({ bookingData, onClose, onPaymentSuc
       let bookingCode = bookingData?.booking_code;
 
       if (!createdBookingId) {
+        const pId = parseInt(bookingData?.service?.id, 10) || 1;
+        const pkgId = parseInt(bookingData?.selectedPackage?.id, 10) || 1;
+
         const bRes = await bookingService.create({
-          puja_id: bookingData?.service?.id || 1,
-          package_id: bookingData?.selectedPackage?.id || 1,
+          puja_id: pId,
+          package_id: pkgId,
           scheduled_date: bookingData?.devoteeDetails?.scheduledDate || new Date().toISOString().split('T')[0],
           sankalp_name: bookingData?.devoteeDetails?.name || 'Devotee',
           sankalp_gotra: bookingData?.devoteeDetails?.gotra || 'Kashyap',

@@ -2,6 +2,7 @@ import app from './src/app.js';
 import { config } from './src/config/index.js';
 import { initDb, getDbEngine } from './src/database/db.js';
 import { seedDatabase } from './src/database/seed.js';
+import { ModulithManifest } from './src/modules/index.js';
 
 async function startServer() {
   try {
@@ -15,6 +16,7 @@ async function startServer() {
       console.log(`=======================================================`);
       console.log(`🛕 SHIRI MANDIR BACKEND REST API IS RUNNING`);
       console.log(`Port:            http://localhost:${config.port}`);
+      console.log(`Architecture:    Modular Monolith (Modulith - ${ModulithManifest.length} Domain Modules)`);
       console.log(`Environment:     ${config.nodeEnv}`);
       console.log(`Database Engine: ${getDbEngine()}`);
       console.log(`API Docs:        http://localhost:${config.port}/api/docs`);

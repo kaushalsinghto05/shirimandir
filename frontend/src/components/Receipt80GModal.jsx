@@ -1,15 +1,30 @@
 import React from 'react';
 import { X, Download, Printer } from 'lucide-react';
 
-export default function Receipt80GModal({ receiptData, onClose }) {
-  if (!receiptData) return null;
+export default function Receipt80GModal({ receiptData, booking, onClose }) {
+  const data = receiptData || booking;
+  if (!data) return null;
+
+  const receipt = {
+    receiptNo: data.receiptNo || data.booking_code || `RCP-80G-${data.id || '9081'}`,
+    date: data.date || data.scheduled_date || new Date().toISOString().split('T')[0],
+    donorName: data.donorName || data.sankalp_name || 'Devotee',
+    pan: data.pan || 'AABCS1234F',
+    temple: data.temple || data.temple_name || 'Shri Kashi Vishwanath Temple',
+    service: data.service || data.puja_title || data.name || 'Puja Seva',
+    amount: data.amount || data.total_amount_inr || (data.total_amount_paise ? data.total_amount_paise / 100 : 2100)
+  };
 
   const handlePrint = () => {
     window.print();
   };
 
+  const handleDownloadPdf = () => {
+    window.print();
+  };
+
   return (
-    <div className="fixed inset-0 bg-charcoal-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-charcoal-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-white rounded-3xl w-full max-w-xl shadow-elevated relative animate-scale-in flex flex-col max-h-[90vh]">
         <button onClick={onClose} className="absolute top-4 right-4 text-charcoal-500 hover:text-charcoal-900 bg-ivory-100 hover:bg-ivory-200 p-2 rounded-full transition-all duration-300 z-10">
           <X className="w-5 h-5" />
@@ -27,31 +42,31 @@ export default function Receipt80GModal({ receiptData, onClose }) {
           <div className="space-y-4 font-sans text-charcoal-700">
             <div className="flex justify-between border-b border-ivory-200 pb-2">
               <span className="font-semibold">Receipt No:</span>
-              <span>{receiptData.receiptNo}</span>
+              <span className="font-mono font-bold text-charcoal-900">{receipt.receiptNo}</span>
             </div>
             <div className="flex justify-between border-b border-ivory-200 pb-2">
               <span className="font-semibold">Date:</span>
-              <span>{receiptData.date}</span>
+              <span>{receipt.date}</span>
             </div>
             <div className="flex justify-between border-b border-ivory-200 pb-2">
               <span className="font-semibold">Donor Name:</span>
-              <span>{receiptData.donorName}</span>
+              <span className="font-semibold text-charcoal-900">{receipt.donorName}</span>
             </div>
             <div className="flex justify-between border-b border-ivory-200 pb-2">
               <span className="font-semibold">PAN Number:</span>
-              <span className="uppercase">{receiptData.pan}</span>
+              <span className="uppercase font-mono">{receipt.pan}</span>
             </div>
             <div className="flex justify-between border-b border-ivory-200 pb-2">
               <span className="font-semibold">Temple:</span>
-              <span>{receiptData.temple}</span>
+              <span>{receipt.temple}</span>
             </div>
             <div className="flex justify-between border-b border-ivory-200 pb-2">
               <span className="font-semibold">Service:</span>
-              <span>{receiptData.service}</span>
+              <span>{receipt.service}</span>
             </div>
             <div className="flex justify-between border-b border-ivory-200 pb-2 text-lg">
               <span className="font-bold text-charcoal-900">Donation Amount:</span>
-              <span className="font-mono font-bold text-copper-600">₹{receiptData.amount}</span>
+              <span className="font-mono font-bold text-copper-600">₹{receipt.amount}</span>
             </div>
           </div>
 
@@ -63,10 +78,10 @@ export default function Receipt80GModal({ receiptData, onClose }) {
           
           <div className="mt-8 flex justify-center">
             <div className="w-24 h-24 bg-ivory-100 border border-ivory-200 rounded-lg flex items-center justify-center">
-              <span className="text-xs text-charcoal-400">QR Code</span>
+              <span className="text-xs text-charcoal-400 font-mono">[80G QR Code]</span>
             </div>
           </div>
-          <p className="text-center text-xs text-charcoal-400 mt-2">Scan to verify authenticity</p>
+          <p className="text-center text-xs text-charcoal-400 mt-2">Scan to verify authenticity with temple trust</p>
         </div>
 
         {/* Actions */}
@@ -79,10 +94,11 @@ export default function Receipt80GModal({ receiptData, onClose }) {
             <span>Print Receipt</span>
           </button>
           <button 
-            className="flex items-center justify-center space-x-2 px-5 py-3 min-h-[44px] bg-copper-400 hover:bg-copper-500 text-ivory-50 rounded-xl transition-all duration-300 shadow-copper-glow focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2"
+            onClick={handleDownloadPdf}
+            className="flex items-center justify-center space-x-2 px-5 py-3 min-h-[44px] bg-copper-500 hover:bg-copper-600 text-white rounded-xl transition-all duration-300 shadow-copper-glow focus:ring-2 focus:ring-copper-400/50 focus:ring-offset-2"
           >
             <Download className="w-4 h-4" />
-            <span>Download PDF</span>
+            <span>Download Receipt</span>
           </button>
         </div>
       </div>

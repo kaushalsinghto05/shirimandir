@@ -35,10 +35,25 @@ export async function apiRequest(endpoint, { method = 'GET', body = null, header
 
 // ── Auth Services ──
 export const authService = {
-  login: (email, password) => apiRequest('/auth/login', { method: 'POST', body: { email, password } }),
-  register: (payload) => apiRequest('/auth/register', { method: 'POST', body: payload }),
+  login: async (email, password) => {
+    const res = await apiRequest('/auth/login', { method: 'POST', body: { email, password } });
+    if (res.ok && res.data?.data?.token) {
+      localStorage.setItem('shirimandir_token', res.data.data.token);
+    }
+    return res;
+  },
+  register: async (payload) => {
+    const res = await apiRequest('/auth/register', { method: 'POST', body: payload });
+    if (res.ok && res.data?.data?.token) {
+      localStorage.setItem('shirimandir_token', res.data.data.token);
+    }
+    return res;
+  },
   getProfile: () => apiRequest('/auth/me'),
-  updateConsent: (consent_data_sharing) => apiRequest('/auth/consent', { method: 'PUT', body: { consent_data_sharing } })
+  updateConsent: (consent_data_sharing) => apiRequest('/auth/consent', { method: 'PUT', body: { consent_data_sharing } }),
+  logout: () => {
+    localStorage.removeItem('shirimandir_token');
+  }
 };
 
 // ── Temple Services ──
@@ -89,7 +104,11 @@ export const orderService = {
 // ── Payment Services ──
 export const paymentService = {
   createIntent: (payload) => apiRequest('/payments/intent', { method: 'POST', body: payload }),
-  simulateWebhook: (paymentCode) => apiRequest('/payments/simulate-webhook', { method: 'POST', body: { payment_code: paymentCode } })
+  verifyPayment: (payload) => apiRequest('/payments/verify', { method: 'POST', body: payload }),
+  simulateWebhook: (paymentCode, eventType = 'payment.captured') =>
+    apiRequest('/payments/simulate-webhook', { method: 'POST', body: { payment_code: paymentCode, event_type: eventType } }),
+  getByCode: (paymentCode) => apiRequest(`/payments/${paymentCode}`),
+  getMyPayments: () => apiRequest('/payments/my')
 };
 
 // ── Refund & Cancellation Policy Services ──

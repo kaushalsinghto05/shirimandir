@@ -5,11 +5,12 @@ import {
 } from 'lucide-react';
 import VerificationBadge from './VerificationBadge';
 
-export default function TempleDetailModal({ temple, onClose, onBookService, onAddToCart, isWishlisted, onToggleWishlist }) {
+export default function TempleDetailModal({ temple, onClose, onBookService, onAddToCart, wishlist = [], isWishlisted: propIsWishlisted, onToggleWishlist }) {
   const [activeTab, setActiveTab] = useState('pujas'); // 'pujas', 'prasad', 'about', 'telemetry'
 
   if (!temple) return null;
 
+  const isWishlisted = propIsWishlisted !== undefined ? propIsWishlisted : Boolean(wishlist?.includes?.(temple.id));
   const verificationStatus = temple.verification_status || (temple.trustBadge ? 'official' : 'independent');
   const proofDoc = temple.affiliation_proof_doc || temple.trustBadge?.verificationUrl;
 
@@ -134,7 +135,15 @@ export default function TempleDetailModal({ temple, onClose, onBookService, onAd
                   <button
                     onClick={() => {
                       onClose();
-                      if (onBookService) onBookService(puja);
+                      if (onBookService) {
+                        onBookService({
+                          ...puja,
+                          temple_id: temple.id,
+                          temple_name: temple.name,
+                          temple: temple.name,
+                          temple_slug: temple.slug || temple.id
+                        });
+                      }
                     }}
                     className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-copper-500 hover:bg-copper-600 text-white font-medium text-xs whitespace-nowrap transition-colors shadow-sm"
                   >

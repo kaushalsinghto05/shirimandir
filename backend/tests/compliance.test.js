@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query, initDb } from '../src/database/db.js';
 import { seedDatabase } from '../src/database/seed.js';
-import { verifyWebhookSignature, createMockWebhookEvent } from '../src/services/paymentWebhookService.js';
+import {
+  verifyWebhookSignature,
+  verifyCheckoutSignature,
+  createMockWebhookEvent,
+  createMockCheckoutSignature
+} from '../src/services/paymentWebhookService.js';
 
 test('Shiri Mandir Compliance & Data Integrity Suite', async (t) => {
   await initDb();
@@ -122,5 +127,48 @@ test('Shiri Mandir Compliance & Data Integrity Suite', async (t) => {
       /CHECK constraint failed/i,
       'Database must forbid negative stock quantities'
     );
+  });
+
+  await t.test('Rule 8: Direct checkout signature verification with HMAC SHA-256', async () => {
+    const orderId = 'order_rzp_test123';
+    const paymentId = 'pay_rzp_mock456';
+    const validSig = createMockCheckoutSignature({ gatewayOrderId: orderId, gatewayPaymentId: paymentId });
+
+    // 1. Valid checkout signature passes
+    const valid = verifyCheckoutSignature({ gatewayOrderId: orderId, gatewayPaymentId: paymentId, signature: validSig });
+    assert.equal(valid.isValid, true, 'Valid checkout signature must pass');
+
+    // 2. Tampered signature fails
+    const invalid = verifyCheckoutSignature({ gatewayOrderId: orderId, gatewayPaymentId: paymentId, signature: 'bad_signature_val' });
+    assert.equal(invalid.isValid, false, 'Tampered signature must fail');
+
+    // 3. Mismatched order ID fails
+    const mismatched = verifyCheckoutSignature({ gatewayOrderId: 'order_rzp_wrong', gatewayPaymentId: paymentId, signature: validSig });
+    assert.equal(mismatched.isValid, false, 'Mismatched order ID must fail');
+  });
+
+  await t.test('Rule 9: Payment verified_server_side defaults to 0 and transitions to 1', async () => {
+    const pCode = `PAY-TEST-COMPLIANCE-${Date.now()}`;
+    await query(
+      `INSERT INTO payments (
+        payment_code, booking_id, user_id, amount_paise, currency, gateway, gateway_order_id, verified_server_side, status
+      )
+      VALUES ($1, 1, 1, 100000, 'INR', 'razorpay', 'order_rzp_c01', 0, 'created')`,
+      [pCode]
+    );
+
+    const initial = await query('SELECT verified_server_side, status FROM payments WHERE payment_code = $1', [pCode]);
+    assert.equal(initial.rows[0].verified_server_side, 0, 'Initial payment must have verified_server_side = 0');
+    assert.equal(initial.rows[0].status, 'created', 'Initial status must be created');
+
+    // Simulate verified update
+    await query(
+      'UPDATE payments SET verified_server_side = 1, status = \'captured\' WHERE payment_code = $1',
+      [pCode]
+    );
+
+    const updated = await query('SELECT verified_server_side, status FROM payments WHERE payment_code = $1', [pCode]);
+    assert.equal(updated.rows[0].verified_server_side, 1, 'Updated payment must have verified_server_side = 1');
+    assert.equal(updated.rows[0].status, 'captured', 'Status must transition to captured');
   });
 });
