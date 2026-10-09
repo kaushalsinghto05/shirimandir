@@ -11,7 +11,7 @@
     "seed:backend": "node backend/src/database/seed.js",
     "test:backend": "node --test backend/tests/compliance.test.js",
     "build": "vite build",
-    "build:render": "npm install && npm run build && cd backend && npm install",
+    "build:render": "npm install && npm run build && npm --prefix backend install",
     "start": "node backend/server.js",
     "preview": "vite preview"
   },

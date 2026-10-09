@@ -33,7 +33,15 @@ if (isPostgres) {
  */
 export async function query(sqlText, params = []) {
   if (isPostgres) {
-    const res = await pgPool.query(sqlText, params);
+    const pgSql = sqlText
+      .replace(/datetime\('now'\)/gi, 'CURRENT_TIMESTAMP')
+      .replace(/\bis_active\s*=\s*1\b/gi, 'is_active = TRUE')
+      .replace(/\bis_active\s*=\s*0\b/gi, 'is_active = FALSE')
+      .replace(/\bis_edible\s*=\s*1\b/gi, 'is_edible = TRUE')
+      .replace(/\bis_edible\s*=\s*0\b/gi, 'is_edible = FALSE')
+      .replace(/\bconsent_data_sharing\s*=\s*1\b/gi, 'consent_data_sharing = TRUE')
+      .replace(/\bconsent_data_sharing\s*=\s*0\b/gi, 'consent_data_sharing = FALSE');
+    const res = await pgPool.query(pgSql, params);
     return { rows: res.rows, rowCount: res.rowCount };
   }
 
