@@ -33,14 +33,34 @@ if (isPostgres) {
  */
 export async function query(sqlText, params = []) {
   if (isPostgres) {
-    const pgSql = sqlText
+    let pgSql = sqlText
+      .replace(/datetime\('now',\s*'-(\d+)\s*days'\)/gi, "CURRENT_TIMESTAMP - INTERVAL '$1 days'")
       .replace(/datetime\('now'\)/gi, 'CURRENT_TIMESTAMP')
       .replace(/\bis_active\s*=\s*1\b/gi, 'is_active = TRUE')
       .replace(/\bis_active\s*=\s*0\b/gi, 'is_active = FALSE')
       .replace(/\bis_edible\s*=\s*1\b/gi, 'is_edible = TRUE')
       .replace(/\bis_edible\s*=\s*0\b/gi, 'is_edible = FALSE')
       .replace(/\bconsent_data_sharing\s*=\s*1\b/gi, 'consent_data_sharing = TRUE')
-      .replace(/\bconsent_data_sharing\s*=\s*0\b/gi, 'consent_data_sharing = FALSE');
+      .replace(/\bconsent_data_sharing\s*=\s*0\b/gi, 'consent_data_sharing = FALSE')
+      .replace(/\bconsent_data_shared\s*=\s*1\b/gi, 'consent_data_shared = TRUE')
+      .replace(/\bconsent_data_shared\s*=\s*0\b/gi, 'consent_data_shared = FALSE')
+      .replace(/\bverified_server_side\s*=\s*1\b/gi, 'verified_server_side = TRUE')
+      .replace(/\bverified_server_side\s*=\s*0\b/gi, 'verified_server_side = FALSE');
+
+    // Auto-cast parameter placeholders for boolean columns in PostgreSQL
+    if (/INSERT INTO users/i.test(pgSql)) {
+      pgSql = pgSql.replace(/\$9\b/g, '($9::boolean)');
+    }
+    if (/UPDATE users/i.test(pgSql) && /consent_data_sharing\s*=\s*\$1/i.test(pgSql)) {
+      pgSql = pgSql.replace(/consent_data_sharing\s*=\s*\$1/i, 'consent_data_sharing = ($1::boolean)');
+    }
+    if (/INSERT INTO bookings/i.test(pgSql)) {
+      pgSql = pgSql.replace(/\$13\b/g, '($13::boolean)');
+    }
+    if (/INSERT INTO prasad_items/i.test(pgSql)) {
+      pgSql = pgSql.replace(/\$10\b/g, '($10::boolean)').replace(/\$12\b/g, '($12::boolean)');
+    }
+
     const res = await pgPool.query(pgSql, params);
     return { rows: res.rows, rowCount: res.rowCount };
   }

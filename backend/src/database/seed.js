@@ -14,15 +14,15 @@ export async function seedDatabase() {
   await query(`
     INSERT INTO users (id, name, email, password_hash, phone, role, gotra, rashi, nakshatra, consent_data_sharing, consent_timestamp, consent_ip_address)
     VALUES 
-    (1, 'Kaushal Singh', 'kaushal@example.com', $1, '+919876543210', 'devotee', 'Kashyap', 'Dhanu', 'Moola', 1, datetime('now'), '127.0.0.1')
+    (1, 'Kaushal Singh', 'kaushal@example.com', $1, '+919876543210', 'devotee', 'Kashyap', 'Dhanu', 'Moola', TRUE, CURRENT_TIMESTAMP, '127.0.0.1')
     ON CONFLICT (id) DO NOTHING;
   `, [passwordHash]);
 
-  // Devotee without consent (defaults to 0 / false to test privacy enforcement)
+  // Devotee without consent (defaults to FALSE to test privacy enforcement)
   await query(`
     INSERT INTO users (id, name, email, password_hash, phone, role, gotra, rashi, nakshatra, consent_data_sharing)
     VALUES 
-    (2, 'Aarav Sharma', 'aarav@example.com', $1, '+919811122233', 'devotee', 'Bharadwaj', 'Mesh', 'Ashwini', 0)
+    (2, 'Aarav Sharma', 'aarav@example.com', $1, '+919811122233', 'devotee', 'Bharadwaj', 'Mesh', 'Ashwini', FALSE)
     ON CONFLICT (id) DO NOTHING;
   `, [passwordHash]);
 
@@ -72,10 +72,10 @@ export async function seedDatabase() {
       20,
       'official',
       'https://storage.shirimandir.org/compliance/docs/kashi_vishwanath_trust_mou_2024.pdf',
-      datetime('now'),
+      CURRENT_TIMESTAMP,
       4,
       'TRUST-KV-UP-7819',
-      1
+      TRUE
     ),
     (
       2,
@@ -95,10 +95,10 @@ export async function seedDatabase() {
       45,
       'partnered',
       'https://storage.shirimandir.org/compliance/docs/tirumala_archaka_seva_agreement_2024.pdf',
-      datetime('now'),
+      CURRENT_TIMESTAMP,
       4,
       'AP-TTD-ARCH-2023',
-      1
+      TRUE
     ),
     (
       3,
@@ -121,7 +121,7 @@ export async function seedDatabase() {
       NULL,
       NULL,
       'MH-BOM-TRUST-1801',
-      1
+      TRUE
     )
     ON CONFLICT (id) DO NOTHING;
   `);
@@ -136,35 +136,35 @@ export async function seedDatabase() {
       'Lord Shiva',
       'Sacred Vedic ritual chanting Namakam and Chamakam while bathing the divine Jyotirlinga with holy Ganga Jal, milk, honey, sugarcane juice, and fresh bilva leaves.',
       'Eliminates planetary doshas, brings inner tranquility, and invokes Mahadeva’s divine grace.',
-      60, 210000, 'rudrabhishek', 30, 1, 1
+      60, 210000, 'rudrabhishek', 30, TRUE, TRUE
     ),
     (
       2, 1, 'Special Sandhya Aarti & Bilva Archana',
       'Lord Shiva',
       'Evening Aarti dedicated to Vishweshwara with 108 Bilva Patra offered in devotee’s name with Gotra chanting.',
       'Invokes prosperity, peace of mind, and divine protection.',
-      45, 110000, 'aarti', 50, 1, 1
+      45, 110000, 'aarti', 50, TRUE, TRUE
     ),
     (
       3, 2, 'Kalyanotsavam & Suprabhata Archana Seva',
       'Lord Venkateswara (Balaji)',
       'Divine celestial wedding ceremony of Lord Venkateswara and Goddess Lakshmi-Padmavathi performed by traditional Vedic priests.',
       'Blesses families with matrimonial harmony, boundless abundance, and joy.',
-      90, 310000, 'maha_puja', 20, 1, 1
+      90, 310000, 'maha_puja', 20, TRUE, TRUE
     ),
     (
       4, 2, 'Sahasra Deepalankarana Seva (1,000 Sacred Lamps)',
       'Lord Venkateswara (Balaji)',
       'Grand evening seva lit by thousands of sacred ghee lamps while devotional hymns are recited.',
       'Dispels ignorance, cures spiritual hurdles, and brings auspicious radiance.',
-      60, 180000, 'special_puja', 40, 1, 1
+      60, 180000, 'special_puja', 40, TRUE, TRUE
     ),
     (
       5, 3, 'Shree Ganesh Atharvashirsha Sahasra Avartan',
       'Lord Ganesha',
       '1,000 sacred Vedic recitations of the Ganapati Atharvashirsha accompanied by fresh 21 Durva grass offerings.',
       'Removes stubborn obstacles in career, business, health, and education.',
-      75, 150000, 'havan', 25, 1, 1
+      75, 150000, 'havan', 25, TRUE, TRUE
     )
     ON CONFLICT (id) DO NOTHING;
   `);
@@ -200,7 +200,7 @@ export async function seedDatabase() {
       'Handcrafted pure desi cow ghee peda infused with saffron, cardamom, and blessed holy dry fruits from Kashi Vishwanath Sanctum.',
       45000, 400, 'Desi Ghee, Pure Khoya, Saffron, Almonds, Cashews, Cardamom', 14,
       'https://images.unsplash.com/photo-1599785209707-a456fc1337bb?auto=format&fit=crop&w=800&q=80',
-      120, 1, '12723999000142', datetime('now'), 4, 1
+      120, TRUE, '12723999000142', CURRENT_TIMESTAMP, 4, TRUE
     ),
     (
       2, 1,
@@ -208,7 +208,7 @@ export async function seedDatabase() {
       'Certified authentic Ganga Jal collected during Brahma Muhurta, consecrated Shiva Bhasma, and Rudraksha talisman.',
       25000, 250, 'Sacred Ganga Jal, Vibhuti Bhasma, Certified Panchamukhi Rudraksha', 365,
       'https://images.unsplash.com/photo-1608481337062-4093bf3ed404?auto=format&fit=crop&w=800&q=80',
-      85, 0, NULL, NULL, NULL, 1
+      85, FALSE, NULL, NULL, NULL, TRUE
     ),
     (
       3, 2,
@@ -216,7 +216,7 @@ export async function seedDatabase() {
       'Legendary world-famous Tirupati Balaji Laddu made with pure ghee, boondi, sugar candy, raisins, and roasted cashews.',
       55000, 500, 'Gram Flour, Pure Cow Ghee, Sugar Candy (Kalkandu), Cashew Nuts, Raisins, Cardamom', 10,
       'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
-      45, 1, '10118028000451', datetime('now'), 4, 1
+      45, TRUE, '10118028000451', CURRENT_TIMESTAMP, 4, TRUE
     ),
     (
       4, 3,
@@ -224,7 +224,7 @@ export async function seedDatabase() {
       'Devotedly crafted Lord Ganesha favorite modaks packed in temperature-regulated, hygienic food-grade tins.',
       40000, 350, 'Rice Flour, Fresh Grated Coconut, Jaggery, Nutmeg, Pure Ghee', 7,
       'https://images.unsplash.com/photo-1631451095765-2c91616fc9e6?auto=format&fit=crop&w=800&q=80',
-      30, 1, '11521018000892', datetime('now'), 4, 1
+      30, TRUE, '11521018000892', CURRENT_TIMESTAMP, 4, TRUE
     )
     ON CONFLICT (id) DO NOTHING;
   `);
@@ -245,12 +245,12 @@ export async function seedDatabase() {
       1, 'BK-KV-2026-9081', 1, 1, 1, 1,
       '2026-10-01', '07:00 AM - 08:00 AM',
       'Kaushal Singh', 'Kashyap', 'Moola', 'Dhanu', 'Health, spiritual progress, family wellbeing',
-      1,
+      TRUE,
       210000, 25000, 5000, 0, 240000,
       'completed',
       'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80',
       'photo',
-      datetime('now', '-2 days'),
+      '2026-10-08T07:00:00.000Z',
       3,
       'Maha Rudrabhishek successfully consecrated in your Gotra with Bilva offering. Recording archived.'
     ),
@@ -258,7 +258,7 @@ export async function seedDatabase() {
       2, 'BK-TB-2026-4412', 1, 3, 4, 2,
       '2026-10-15', '09:30 AM - 11:00 AM',
       'Kaushal Singh', 'Kashyap', 'Moola', 'Dhanu', 'Success in upcoming endeavours',
-      1,
+      TRUE,
       310000, 0, 5000, 0, 315000,
       'confirmed',
       NULL, 'none', NULL, NULL, NULL
@@ -308,7 +308,7 @@ export async function seedDatabase() {
     (
       1, 'PAY-KV-2026-8801', 1, 1,
       240000, 'INR', 'razorpay', 'order_KvZ9812497', 'pay_Kv98104828', 'hmac_sha256_mock_sig_9901',
-      1, 'evt_rzp_9812490184', datetime('now', '-2 days'), 'captured'
+      TRUE, 'evt_rzp_9812490184', '2026-10-08T07:00:00.000Z', 'captured'
     )
     ON CONFLICT (id) DO NOTHING;
   `);
@@ -325,7 +325,7 @@ export async function seedDatabase() {
       1, 'REF-2026-0041', 1, 2,
       315000, 308700, 6300,
       'Family travel delayed due to unforeseen emergency',
-      '>48h_full_refund_less_gateway_fee', 1, 'requested'
+      '>48h_full_refund_less_gateway_fee', TRUE, 'requested'
     )
     ON CONFLICT (id) DO NOTHING;
   `);
