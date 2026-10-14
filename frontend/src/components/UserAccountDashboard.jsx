@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, Phone, MapPin, Video, FileText, CheckCircle2, Clock, 
   RotateCcw, ShieldCheck, Lock, Check, Package, AlertCircle, ExternalLink 
