@@ -42,7 +42,7 @@ export default function DevoteeDashboardPage({ user, onLogout }) {
 
           <div className="flex items-center gap-2.5">
             <Link
-              to="/"
+              to="/explore"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-ivory-300 text-charcoal-700 hover:bg-ivory-100 text-xs font-medium transition-colors"
             >
               <Home className="w-3.5 h-3.5" />

@@ -4,30 +4,53 @@ import { ShieldAlert, ArrowLeft, Lock } from 'lucide-react';
 
 export default function ProtectedRoute({ 
   user, 
+  authLoading = false,
   allowedRoles, 
   requireCompleted = true, 
   children 
 }) {
   const token = localStorage.getItem('shirimandir_token');
-  const savedUserStr = localStorage.getItem('shirimandir_user');
 
-  // 1. Session check: if not authenticated, redirect to /login
+  // 1. While auth check is running, show loading screen. Do NOT redirect until it finishes.
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#FEFDFB] flex flex-col items-center justify-center font-sans text-charcoal-900">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#d4a15a] to-[#c87d43] text-white flex items-center justify-center font-bold text-2xl shadow-md animate-pulse mb-4">
+          ॐ
+        </div>
+        <div className="flex items-center gap-2 text-sm font-semibold text-charcoal-800">
+          <span className="w-2 h-2 rounded-full bg-copper-500 animate-ping"></span>
+          <span>Verifying sanctum permissions...</span>
+        </div>
+        <p className="text-xs text-charcoal-500 mt-1">Please wait while we verify your access</p>
+      </div>
+    );
+  }
+
+  // 2. Session check: if not authenticated, redirect to /login
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  const activeUser = user || (savedUserStr ? JSON.parse(savedUserStr) : null);
+  const activeUser = user || (() => {
+    try {
+      const savedUserStr = localStorage.getItem('shirimandir_user');
+      return savedUserStr ? JSON.parse(savedUserStr) : null;
+    } catch {
+      return null;
+    }
+  })();
 
   if (!activeUser) {
     return <Navigate to="/login" replace />;
   }
 
-  // 2. Profile completion check: must complete profile before any dashboard
+  // 3. Profile completion check: must complete profile before any dashboard
   if (requireCompleted && !activeUser.profile_completed) {
     return <Navigate to="/complete-profile" replace />;
   }
 
-  // 3. Role check: devotees must not access admin or super_admin routes
+  // 4. Role check: devotees must not access admin or super_admin routes
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(activeUser.role)) {
     const userDashboard = activeUser.role === 'super_admin'
       ? '/super-admin/dashboard'

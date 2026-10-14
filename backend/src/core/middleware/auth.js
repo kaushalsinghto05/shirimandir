@@ -7,15 +7,26 @@ import { query } from '../../database/db.js';
  */
 export async function authenticate(req, res, next) {
   try {
+    let token = null;
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.cookies && req.cookies.shirimandir_token) {
+      token = req.cookies.shirimandir_token;
+    } else if (req.headers.cookie) {
+      const match = req.headers.cookie.match(/(?:^|;\s*)(?:shirimandir_token|token)=([^;]+)/);
+      if (match) {
+        token = decodeURIComponent(match[1]);
+      }
+    }
+
+    if (!token) {
       return res.status(401).json({
         success: false,
         error: 'Unauthorized: Authentication token required'
       });
     }
 
-    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, config.jwtSecret);
 
     // Retrieve fresh user record

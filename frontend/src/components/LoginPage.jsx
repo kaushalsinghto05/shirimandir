@@ -5,7 +5,7 @@ import { authService } from '../services/api';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function LoginPage({ currentUser, onAuthSuccess }) {
+export default function LoginPage({ currentUser, authLoading = false, onAuthSuccess }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,15 +17,15 @@ export default function LoginPage({ currentUser, onAuthSuccess }) {
   const location = useLocation();
 
   // Helper function to redirect user to appropriate destination based on profile & role
-  const redirectDestination = (user) => {
-    if (!user) return '/login';
-    if (!user.profile_completed) {
+  const redirectDestination = (u) => {
+    if (!u) return '/login';
+    if (!u.profile_completed) {
       return '/complete-profile';
     }
-    if (user.role === 'super_admin') {
+    if (u.role === 'super_admin') {
       return '/super-admin/dashboard';
     }
-    if (user.role === 'admin') {
+    if (u.role === 'admin') {
       return '/admin/dashboard';
     }
     return '/devotee/dashboard';
@@ -39,19 +39,23 @@ export default function LoginPage({ currentUser, onAuthSuccess }) {
     }
   }, [location.search]);
 
-  // If already logged in, redirect forward immediately
+  // If already logged in, redirect forward immediately (waits until auth check finishes)
   useEffect(() => {
+    if (authLoading) return;
     const token = localStorage.getItem('shirimandir_token');
-    const savedUserStr = localStorage.getItem('shirimandir_user');
-    if (token && savedUserStr) {
+    const activeUser = currentUser || (() => {
       try {
-        const savedUser = JSON.parse(savedUserStr);
-        navigate(redirectDestination(savedUser), { replace: true });
+        const savedUserStr = localStorage.getItem('shirimandir_user');
+        return savedUserStr ? JSON.parse(savedUserStr) : null;
       } catch {
-        // Continue to login
+        return null;
       }
+    })();
+
+    if (token && activeUser && activeUser.id) {
+      navigate(redirectDestination(activeUser), { replace: true });
     }
-  }, [navigate]);
+  }, [authLoading, currentUser, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,13 +88,13 @@ export default function LoginPage({ currentUser, onAuthSuccess }) {
     try {
       if (activeTab === 'login') {
         const res = await authService.login(trimmedEmail, password);
-        if (res.ok && res.data?.data?.user) {
-          const user = res.data.data.user;
-          setSuccessMsg(`Authentication successful! Welcome back, ${user.name || user.email}.`);
-          if (onAuthSuccess) onAuthSuccess(user);
+        if (res.ok && res.data?.data) {
+          const userObj = res.data.data.user || res.data.data;
+          setSuccessMsg(`Authentication successful! Welcome back, ${userObj.name || userObj.email}.`);
+          if (onAuthSuccess) onAuthSuccess(userObj);
           setTimeout(() => {
-            navigate(redirectDestination(user), { replace: true });
-          }, 400);
+            navigate(redirectDestination(userObj), { replace: true });
+          }, 300);
         } else {
           setErrorMsg(res.data?.error || res.error || 'Invalid email or password.');
           setLoading(false);
@@ -98,13 +102,13 @@ export default function LoginPage({ currentUser, onAuthSuccess }) {
       } else {
         // Register flow: new registrations default to 'devotee' and profile_completed = false
         const res = await authService.register({ email: trimmedEmail, password });
-        if (res.ok && res.data?.data?.user) {
-          const user = res.data.data.user;
+        if (res.ok && res.data?.data) {
+          const userObj = res.data.data.user || res.data.data;
           setSuccessMsg('Account created successfully! Proceeding to complete your profile...');
-          if (onAuthSuccess) onAuthSuccess(user);
+          if (onAuthSuccess) onAuthSuccess(userObj);
           setTimeout(() => {
             navigate('/complete-profile', { replace: true });
-          }, 500);
+          }, 400);
         } else {
           setErrorMsg(res.data?.error || res.error || 'Registration failed. Email may already be in use.');
           setLoading(false);
@@ -115,6 +119,20 @@ export default function LoginPage({ currentUser, onAuthSuccess }) {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#FEFDFB] flex flex-col items-center justify-center font-sans text-charcoal-900">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#d4a15a] to-[#c87d43] text-white flex items-center justify-center font-bold text-2xl shadow-md animate-pulse mb-4">
+          ॐ
+        </div>
+        <div className="flex items-center gap-2 text-sm font-semibold text-charcoal-800">
+          <span className="w-2 h-2 rounded-full bg-copper-500 animate-ping"></span>
+          <span>Checking session...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FEFDFB] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-charcoal-900">

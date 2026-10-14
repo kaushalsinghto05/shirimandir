@@ -1,5 +1,13 @@
 import { identityService } from './identity.service.js';
 
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: '/'
+});
+
 export async function register(req, res, next) {
   try {
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || '127.0.0.1';
@@ -7,6 +15,8 @@ export async function register(req, res, next) {
       ...req.body,
       ipAddress
     });
+
+    res.cookie('shirimandir_token', result.token, getCookieOptions());
 
     return res.status(201).json({
       success: true,
@@ -24,6 +34,8 @@ export async function register(req, res, next) {
 export async function login(req, res, next) {
   try {
     const result = await identityService.loginUser(req.body);
+    res.cookie('shirimandir_token', result.token, getCookieOptions());
+
     return res.json({
       success: true,
       message: 'Authentication successful',
@@ -38,14 +50,16 @@ export async function login(req, res, next) {
 }
 
 export async function getProfile(req, res) {
+  const user = {
+    ...req.user,
+    profile_completed: Boolean(req.user.profile_completed),
+    consent_data_sharing: Boolean(req.user.consent_data_sharing)
+  };
   return res.json({
     success: true,
     data: {
-      user: {
-        ...req.user,
-        profile_completed: Boolean(req.user.profile_completed),
-        consent_data_sharing: Boolean(req.user.consent_data_sharing)
-      }
+      user,
+      ...user
     }
   });
 }
@@ -54,6 +68,10 @@ export async function completeProfile(req, res, next) {
   try {
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || '127.0.0.1';
     const result = await identityService.completeProfile(req.user.id, req.body, ipAddress);
+
+    if (result.token) {
+      res.cookie('shirimandir_token', result.token, getCookieOptions());
+    }
 
     return res.json({
       success: true,

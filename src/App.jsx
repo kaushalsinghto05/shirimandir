@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroSanctum from './components/HeroSanctum';
 import VerifiedTrustBadges from './components/VerifiedTrustBadges';
@@ -27,7 +27,7 @@ import DevotionalLibraryModal from './components/DevotionalLibraryModal';
 import PrasadCheckoutModal from './components/PrasadCheckoutModal';
 import Footer from './components/Footer';
 
-// New Authentication & Route Guard Components
+// Authentication & Route Guard Components
 import LoginPage from './components/LoginPage';
 import CompleteProfilePage from './components/CompleteProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -37,13 +37,66 @@ import DevoteeDashboardPage from './components/DevoteeDashboardPage';
 import { authService } from './services/api';
 import { TEMPLES, FEATURED_PUJAS } from './data/mockData';
 
+/**
+ * Root Gateway Component: Evaluates authentication state on app load and on "/" route.
+ * 1. Reads saved token.
+ * 2. If no token -> goes to /login.
+ * 3. If token exists -> calls GET /api/auth/me (handled in App useEffect).
+ * 4. While check is running, shows loading screen.
+ * 5. If /me returns 401 (invalid/expired) -> goes to /login.
+ * 6. If valid:
+ *    - profile_completed = false -> /complete-profile
+ *    - profile_completed = true  -> dashboard by role
+ */
+function AppRootGate({ user, authLoading }) {
+  const token = localStorage.getItem('shirimandir_token');
+
+  // 4. While check is running, show loading screen. Do NOT redirect until it finishes.
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#FEFDFB] flex flex-col items-center justify-center font-sans text-charcoal-900">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#d4a15a] to-[#c87d43] text-white flex items-center justify-center font-bold text-2xl shadow-md animate-pulse mb-4">
+          ॐ
+        </div>
+        <div className="flex items-center gap-2 text-sm font-semibold text-charcoal-800">
+          <span className="w-2 h-2 rounded-full bg-copper-500 animate-ping"></span>
+          <span>Verifying sanctum session...</span>
+        </div>
+        <p className="text-xs text-charcoal-500 mt-1">Authenticating devotee credentials</p>
+      </div>
+    );
+  }
+
+  // 2. If no token -> go to /login.
+  // 5. If /me returns 401 -> clear token, go to /login.
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 6. If valid:
+  // - profile_completed = false -> /complete-profile
+  if (!user.profile_completed) {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
+  // - profile_completed = true  -> dashboard by role
+  if (user.role === 'super_admin') {
+    return <Navigate to="/super-admin/dashboard" replace />;
+  }
+  if (user.role === 'admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  return <Navigate to="/devotee/dashboard" replace />;
+}
+
 export default function App() {
   const navigate = useNavigate();
 
   // Navigation & View Mode
   const [activeTab, setActiveTab] = useState('home');
 
-  // Devotee Authentication State - Initialized safely from real session
+  // Authentication State
+  const [authLoading, setAuthLoading] = useState(true);
   const [user, setUser] = useState(() => {
     try {
       const savedUserStr = localStorage.getItem('shirimandir_user');
@@ -126,19 +179,46 @@ export default function App() {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [astroModalOpen, setAstroModalOpen] = useState(false);
 
-  // Synchronize authenticated profile if token is present
+  // Initial App Load Verification: Checks token and calls GET /api/auth/me
   useEffect(() => {
+    let isMounted = true;
     const token = localStorage.getItem('shirimandir_token');
-    if (token) {
-      authService.getProfile()
-        .then(res => {
-          if (res.ok && res.data?.data) {
-            setUser(res.data.data);
-            localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data));
-          }
-        })
-        .catch(err => console.warn('Profile fetch notice:', err));
+
+    if (!token) {
+      setUser(null);
+      setAuthLoading(false);
+      return;
     }
+
+    // Call GET /api/auth/me to verify session
+    authService.getProfile()
+      .then(res => {
+        if (!isMounted) return;
+        if (res.ok && res.data?.data) {
+          const verifiedUser = res.data.data.user || res.data.data;
+          setUser(verifiedUser);
+          localStorage.setItem('shirimandir_user', JSON.stringify(verifiedUser));
+        } else {
+          // 401 or invalid token
+          localStorage.removeItem('shirimandir_token');
+          localStorage.removeItem('shirimandir_user');
+          setUser(null);
+        }
+      })
+      .catch(err => {
+        if (!isMounted) return;
+        console.warn('Auth verification notice:', err);
+        localStorage.removeItem('shirimandir_token');
+        localStorage.removeItem('shirimandir_user');
+        setUser(null);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setAuthLoading(false);
+        }
+      });
+
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {
@@ -189,6 +269,7 @@ export default function App() {
   const handleUserAuthenticated = (userData) => {
     setUser(userData);
     localStorage.setItem('shirimandir_user', JSON.stringify(userData));
+    setAuthLoading(false);
   };
 
   // Logout handler
@@ -363,133 +444,147 @@ export default function App() {
     </>
   );
 
-  return (
-    <Routes>
-      {/* 1. Main Landing & Tab Pages */}
-      <Route
-        path="/"
-        element={
-          <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans overflow-x-hidden">
-            <Navbar
-              activeTab={activeTab}
-              setActiveTab={handleNavClick}
-              user={user}
-              onOpenLogin={() => navigate('/login')}
-              onLogout={handleLogout}
-              wishlistCount={wishlist.length}
-              onOpenWishlist={() => setWishlistDrawerOpen(true)}
-              isAdminMode={false}
-              setIsAdminMode={() => navigate('/admin/dashboard')}
-              onOpenAccount={handleOpenAccount}
-            />
-
-            <main className={`flex-1 ${activeTab !== 'home' ? 'pt-16 md:pt-20' : ''}`}>
-              {activeTab === 'account' ? (
-                <UserAccountDashboard
-                  user={user}
-                  onOpenReceipt={(rcp) => setReceiptModalData(rcp)}
-                  wishlist={wishlist}
-                  temples={templesData}
-                  onSelectTemple={(temple) => setActiveTempleModal(temple)}
-                />
-              ) : activeTab === 'temples' ? (
-                <TempleDirectory
-                  temples={templesData}
-                  onSelectTemple={(temple) => setActiveTempleModal(temple)}
-                  wishlist={wishlist}
-                  onToggleWishlist={handleToggleWishlist}
-                />
-              ) : activeTab === 'pujas' ? (
-                <FeaturedPujasSection
-                  onBookPuja={handleInitiateBooking}
-                  selectedDeityFilter={selectedDeityFilter}
-                />
-              ) : activeTab === 'chadhava' ? (
-                <ChadhavaSection
-                  onOfferChadhava={handleInitiateBooking}
-                />
-              ) : activeTab === 'yatra' ? (
-                <YatraPackagesSection
-                  onBookYatra={handleInitiateBooking}
-                />
-              ) : (
-                <>
-                  <HeroSanctum
-                    onExplorePujas={() => {
-                      const el = document.getElementById('pujas-section');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    onViewDarshanQueue={() => {
-                      const firstTemple = templesData[0];
-                      setActiveTempleModal(firstTemple);
-                    }}
-                    selectedDeityFilter={selectedDeityFilter}
-                    setSelectedDeityFilter={setSelectedDeityFilter}
-                  />
-
-                  <VerifiedTrustBadges temples={templesData} />
-
-                  <LiveDarshanQueueSection
-                    temples={templesData}
-                    onSelectTemple={(temple) => setActiveTempleModal(temple)}
-                    wishlist={wishlist}
-                    onToggleWishlist={handleToggleWishlist}
-                  />
-
-                  <div id="pujas-section">
-                    <FeaturedPujasSection
-                      onBookPuja={handleInitiateBooking}
-                      selectedDeityFilter={selectedDeityFilter}
-                    />
-                  </div>
-
-                  <GuidedDarshanSection
-                    onBookGuidedDarshan={handleInitiateBooking}
-                  />
-
-                  <YatraPackagesSection
-                    onBookYatra={handleInitiateBooking}
-                  />
-
-                  <ChadhavaSection
-                    onOfferChadhava={handleInitiateBooking}
-                  />
-
-                  <AstroToolsModal isInline={true} />
-
-                  <SanatanWallSection
-                    onShareExperience={() => alert('Thank you! Your experience has been shared with the community. 🙏')}
-                  />
-
-                  <TestimonialSection />
-
-                  <ReferralSection />
-                </>
-              )}
-            </main>
-
-            <Footer onNavigate={handleNavClick} />
-            {renderSharedModals()}
-          </div>
-        }
+  // Full Temple Showcase / Exploration View
+  const renderExploreView = () => (
+    <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans overflow-x-hidden">
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={handleNavClick}
+        user={user}
+        onOpenLogin={() => navigate('/login')}
+        onLogout={handleLogout}
+        wishlistCount={wishlist.length}
+        onOpenWishlist={() => setWishlistDrawerOpen(true)}
+        isAdminMode={false}
+        setIsAdminMode={() => navigate('/admin/dashboard')}
+        onOpenAccount={handleOpenAccount}
       />
 
-      {/* 2. Login & Registration (Email only) */}
+      <main className={`flex-1 ${activeTab !== 'home' ? 'pt-16 md:pt-20' : ''}`}>
+        {activeTab === 'account' ? (
+          <UserAccountDashboard
+            user={user}
+            onOpenReceipt={(rcp) => setReceiptModalData(rcp)}
+            wishlist={wishlist}
+            temples={templesData}
+            onSelectTemple={(temple) => setActiveTempleModal(temple)}
+          />
+        ) : activeTab === 'temples' ? (
+          <TempleDirectory
+            temples={templesData}
+            onSelectTemple={(temple) => setActiveTempleModal(temple)}
+            wishlist={wishlist}
+            onToggleWishlist={handleToggleWishlist}
+          />
+        ) : activeTab === 'pujas' ? (
+          <FeaturedPujasSection
+            onBookPuja={handleInitiateBooking}
+            selectedDeityFilter={selectedDeityFilter}
+          />
+        ) : activeTab === 'chadhava' ? (
+          <ChadhavaSection
+            onOfferChadhava={handleInitiateBooking}
+          />
+        ) : activeTab === 'yatra' ? (
+          <YatraPackagesSection
+            onBookYatra={handleInitiateBooking}
+          />
+        ) : (
+          <>
+            <HeroSanctum
+              onExplorePujas={() => {
+                const el = document.getElementById('pujas-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              onViewDarshanQueue={() => {
+                const firstTemple = templesData[0];
+                setActiveTempleModal(firstTemple);
+              }}
+              selectedDeityFilter={selectedDeityFilter}
+              setSelectedDeityFilter={setSelectedDeityFilter}
+            />
+
+            <VerifiedTrustBadges temples={templesData} />
+
+            <LiveDarshanQueueSection
+              temples={templesData}
+              onSelectTemple={(temple) => setActiveTempleModal(temple)}
+              wishlist={wishlist}
+              onToggleWishlist={handleToggleWishlist}
+            />
+
+            <div id="pujas-section">
+              <FeaturedPujasSection
+                onBookPuja={handleInitiateBooking}
+                selectedDeityFilter={selectedDeityFilter}
+              />
+            </div>
+
+            <GuidedDarshanSection
+              onBookGuidedDarshan={handleInitiateBooking}
+            />
+
+            <YatraPackagesSection
+              onBookYatra={handleInitiateBooking}
+            />
+
+            <ChadhavaSection
+              onOfferChadhava={handleInitiateBooking}
+            />
+
+            <AstroToolsModal isInline={true} />
+
+            <SanatanWallSection
+              onShareExperience={() => alert('Thank you! Your experience has been shared with the community. 🙏')}
+            />
+
+            <TestimonialSection />
+
+            <ReferralSection />
+          </>
+        )}
+      </main>
+
+      <Footer onNavigate={handleNavClick} />
+      {renderSharedModals()}
+    </div>
+  );
+
+  return (
+    <Routes>
+      {/* 1. App Load & Root Route Gate */}
+      <Route
+        path="/"
+        element={<AppRootGate user={user} authLoading={authLoading} />}
+      />
+
+      {/* 2. Public Temple Discovery & Darshan Explorer */}
+      <Route
+        path="/explore"
+        element={renderExploreView()}
+      />
+      <Route
+        path="/home"
+        element={renderExploreView()}
+      />
+
+      {/* 3. Login & Registration (Email only) */}
       <Route
         path="/login"
         element={
           <LoginPage
             currentUser={user}
+            authLoading={authLoading}
             onAuthSuccess={handleUserAuthenticated}
           />
         }
       />
 
-      {/* 3. Mandatory Devotee Profile Completion Gate */}
+      {/* 4. Mandatory Devotee Profile Completion Gate */}
       <Route
         path="/complete-profile"
         element={
-          <ProtectedRoute user={user} requireCompleted={false}>
+          <ProtectedRoute user={user} authLoading={authLoading} requireCompleted={false}>
             <CompleteProfilePage
               currentUser={user}
               onProfileUpdated={handleUserAuthenticated}
@@ -498,11 +593,11 @@ export default function App() {
         }
       />
 
-      {/* 4. Devotee Dashboard */}
+      {/* 5. Devotee Dashboard */}
       <Route
         path="/devotee/dashboard"
         element={
-          <ProtectedRoute user={user} allowedRoles={['devotee', 'admin', 'super_admin']}>
+          <ProtectedRoute user={user} authLoading={authLoading} allowedRoles={['devotee', 'admin', 'super_admin']}>
             <DevoteeDashboardPage
               user={user}
               onLogout={handleLogout}
@@ -511,11 +606,11 @@ export default function App() {
         }
       />
 
-      {/* 5. Admin Dashboard (Devotees strictly blocked with 403) */}
+      {/* 6. Admin Dashboard (Devotees strictly blocked with 403) */}
       <Route
         path="/admin/dashboard"
         element={
-          <ProtectedRoute user={user} allowedRoles={['admin', 'super_admin']}>
+          <ProtectedRoute user={user} authLoading={authLoading} allowedRoles={['admin', 'super_admin']}>
             <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans">
               <header className="bg-white border-b border-ivory-300 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
                 <div className="flex items-center gap-3">
@@ -531,10 +626,10 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/explore')}
                     className="text-xs font-semibold text-charcoal-700 hover:text-charcoal-900 border border-ivory-300 px-3.5 py-1.5 rounded-xl hover:bg-ivory-100 transition-colors"
                   >
-                    Exit to Home
+                    Explore Temples
                   </button>
                   <button
                     onClick={handleLogout}
@@ -546,7 +641,7 @@ export default function App() {
               </header>
               <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
                 <AdminDashboard
-                  onExitAdmin={() => navigate('/')}
+                  onExitAdmin={() => navigate('/explore')}
                   templesData={templesData}
                   onUpdateWaitTime={handleUpdateWaitTime}
                 />
@@ -556,11 +651,11 @@ export default function App() {
         }
       />
 
-      {/* 6. Super Admin Dashboard (Devotee & Admin blocked) */}
+      {/* 7. Super Admin Dashboard (Devotee & Admin blocked) */}
       <Route
         path="/super-admin/dashboard"
         element={
-          <ProtectedRoute user={user} allowedRoles={['super_admin']}>
+          <ProtectedRoute user={user} authLoading={authLoading} allowedRoles={['super_admin']}>
             <SuperAdminDashboard
               currentUser={user}
               onLogout={handleLogout}
@@ -569,7 +664,7 @@ export default function App() {
         }
       />
 
-      {/* 7. Fallback: Unknown routes redirect to Home */}
+      {/* 8. Fallback: Unknown routes redirect to Home gate */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

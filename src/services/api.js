@@ -16,7 +16,8 @@ export async function apiRequest(endpoint, { method = 'GET', body = null, header
 
   const config = {
     method,
-    headers: customHeaders
+    headers: customHeaders,
+    credentials: 'include' // Transmit cookies across origins
   };
 
   if (body && !(body instanceof FormData)) {
@@ -33,6 +34,7 @@ export async function apiRequest(endpoint, { method = 'GET', body = null, header
     if (res.status === 401) {
       localStorage.removeItem('shirimandir_token');
       localStorage.removeItem('shirimandir_user');
+      document.cookie = 'shirimandir_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
         window.location.href = '/login?expired=1';
       }
@@ -53,11 +55,11 @@ export const authService = {
       method: 'POST', 
       body: { email: email.trim(), password } 
     });
-    if (res.ok && res.data?.data?.token) {
-      localStorage.setItem('shirimandir_token', res.data.data.token);
-      if (res.data.data.user) {
-        localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data.user));
-      }
+    if (res.ok && res.data?.data) {
+      const token = res.data.data.token;
+      const user = res.data.data.user || res.data.data;
+      if (token) localStorage.setItem('shirimandir_token', token);
+      if (user && user.id) localStorage.setItem('shirimandir_user', JSON.stringify(user));
     }
     return res;
   },
@@ -67,11 +69,11 @@ export const authService = {
       method: 'POST', 
       body: { email: email.trim(), password } 
     });
-    if (res.ok && res.data?.data?.token) {
-      localStorage.setItem('shirimandir_token', res.data.data.token);
-      if (res.data.data.user) {
-        localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data.user));
-      }
+    if (res.ok && res.data?.data) {
+      const token = res.data.data.token;
+      const user = res.data.data.user || res.data.data;
+      if (token) localStorage.setItem('shirimandir_token', token);
+      if (user && user.id) localStorage.setItem('shirimandir_user', JSON.stringify(user));
     }
     return res;
   },
@@ -81,19 +83,22 @@ export const authService = {
       method: 'PUT', 
       body: profileData 
     });
-    if (res.ok && res.data?.data?.token) {
-      localStorage.setItem('shirimandir_token', res.data.data.token);
-      if (res.data.data.user) {
-        localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data.user));
-      }
+    if (res.ok && res.data?.data) {
+      const token = res.data.data.token;
+      const user = res.data.data.user || res.data.data;
+      if (token) localStorage.setItem('shirimandir_token', token);
+      if (user && user.id) localStorage.setItem('shirimandir_user', JSON.stringify(user));
     }
     return res;
   },
 
   getProfile: async () => {
     const res = await apiRequest('/auth/me');
-    if (res.ok && res.data?.data?.user) {
-      localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data.user));
+    if (res.ok && res.data?.data) {
+      const user = res.data.data.user || res.data.data;
+      if (user && user.id) {
+        localStorage.setItem('shirimandir_user', JSON.stringify(user));
+      }
     }
     return res;
   },
@@ -104,6 +109,7 @@ export const authService = {
   logout: () => {
     localStorage.removeItem('shirimandir_token');
     localStorage.removeItem('shirimandir_user');
+    document.cookie = 'shirimandir_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }

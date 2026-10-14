@@ -12,9 +12,11 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Enable CORS
+// Enable CORS with Credentials
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: (origin, callback) => {
+    callback(null, origin || true);
+  },
   credentials: true
 }));
 
