@@ -9,14 +9,15 @@ PRAGMA foreign_keys = ON;
 -- 1. USERS & DEVOTEES
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    name TEXT DEFAULT '',
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     phone TEXT,
-    role TEXT NOT NULL DEFAULT 'devotee' CHECK (role IN ('devotee', 'temple_partner', 'admin')),
+    role TEXT NOT NULL DEFAULT 'devotee' CHECK (role IN ('devotee', 'admin', 'super_admin', 'temple_partner')),
     gotra TEXT,
     rashi TEXT,
     nakshatra TEXT,
+    profile_completed INTEGER NOT NULL DEFAULT 0 CHECK (profile_completed IN (0, 1)),
     
     -- COMPLIANCE: Explicit opt-in for personal data sharing with temple partners
     consent_data_sharing INTEGER NOT NULL DEFAULT 0 CHECK (consent_data_sharing IN (0, 1)),

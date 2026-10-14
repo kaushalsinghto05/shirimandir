@@ -71,25 +71,19 @@ export async function query(sqlText, params = []) {
     const translatedSql = sqlText.replace(/\$(\d+)/g, '?');
     const trimmed = translatedSql.trim();
     const isSelect = /^SELECT|^PRAGMA/i.test(trimmed);
+    const hasReturning = /RETURNING/i.test(translatedSql);
+
+    // Convert booleans to 1 / 0 for SQLite binding compatibility
+    const sqliteParams = params.map(p => typeof p === 'boolean' ? (p ? 1 : 0) : p);
 
     // Prepare statement
     const stmt = sqliteDb.prepare(translatedSql);
 
-    if (isSelect) {
-      const rows = stmt.all(...params);
+    if (isSelect || hasReturning) {
+      const rows = stmt.all(...sqliteParams);
       return { rows, rowCount: rows.length };
     } else {
-      const result = stmt.run(...params);
-      // If statement has RETURNING clause, try to emulate or fetch
-      if (/RETURNING/i.test(translatedSql)) {
-        // If RETURNING id is used on INSERT
-        const lastId = result.lastInsertRowid;
-        return {
-          rows: [{ id: Number(lastId) }],
-          rowCount: result.changes,
-          lastInsertRowid: Number(lastId)
-        };
-      }
+      const result = stmt.run(...sqliteParams);
       return {
         rows: [],
         rowCount: result.changes,
@@ -110,11 +104,21 @@ export async function initDb() {
     const schemaPath = path.join(__dirname, 'schema.sql');
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     await pgPool.query(schemaSql);
+    try {
+      await pgPool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN NOT NULL DEFAULT FALSE;');
+    } catch {
+      // column already exists
+    }
     console.log('PostgreSQL schema verified and applied.');
   } else {
     const schemaPath = path.join(__dirname, 'schema_sqlite.sql');
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     sqliteDb.exec(schemaSql);
+    try {
+      sqliteDb.exec('ALTER TABLE users ADD COLUMN profile_completed INTEGER NOT NULL DEFAULT 0;');
+    } catch {
+      // column already exists
+    }
     console.log('SQLite schema verified and applied successfully.');
   }
 }

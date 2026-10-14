@@ -8,8 +8,8 @@ import { authenticate, requireRole } from '../../core/middleware/auth.js';
 
 const router = Router();
 
-// Guard all admin routes
-router.use(authenticate, requireRole(['admin']));
+// Guard all admin routes (devotee strictly prohibited with 403 Forbidden)
+router.use(authenticate, requireRole(['admin', 'super_admin']));
 
 router.get('/metrics', getDashboardMetrics);
 router.get('/refunds', getAllRefundRequests);

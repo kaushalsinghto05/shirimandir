@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroSanctum from './components/HeroSanctum';
 import VerifiedTrustBadges from './components/VerifiedTrustBadges';
@@ -25,26 +26,33 @@ import PanchangModal from './components/PanchangModal';
 import DevotionalLibraryModal from './components/DevotionalLibraryModal';
 import PrasadCheckoutModal from './components/PrasadCheckoutModal';
 import Footer from './components/Footer';
+
+// New Authentication & Route Guard Components
+import LoginPage from './components/LoginPage';
+import CompleteProfilePage from './components/CompleteProfilePage';
+import ProtectedRoute from './components/ProtectedRoute';
+import SuperAdminDashboard from './components/SuperAdminDashboard';
+import DevoteeDashboardPage from './components/DevoteeDashboardPage';
+
 import { authService } from './services/api';
 import { TEMPLES, FEATURED_PUJAS } from './data/mockData';
 
 export default function App() {
+  const navigate = useNavigate();
+
   // Navigation & View Mode
   const [activeTab, setActiveTab] = useState('home');
-  const [isAdminMode, setIsAdminMode] = useState(false);
 
-  // Devotee Authentication State
-  const [user, setUser] = useState({
-    id: 1,
-    name: 'Kaushal Singh',
-    email: 'kaushal@example.com',
-    phone: '+91 98765 43210',
-    gotra: 'Kashyap',
-    rashi: 'Dhanu',
-    nakshatra: 'Moola',
-    role: 'devotee',
-    consent_data_sharing: false
+  // Devotee Authentication State - Initialized safely from real session
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUserStr = localStorage.getItem('shirimandir_user');
+      return savedUserStr ? JSON.parse(savedUserStr) : null;
+    } catch {
+      return null;
+    }
   });
+
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [pendingServiceToBookAfterLogin, setPendingServiceToBookAfterLogin] = useState(null);
 
@@ -77,7 +85,6 @@ export default function App() {
 
   // Temple Directory & Live Queue Telemetry State
   const [templesData, setTemplesData] = useState(() => {
-    // Enrich with statutory verification status
     return TEMPLES.map(t => {
       let status = 'independent';
       let doc = null;
@@ -119,22 +126,15 @@ export default function App() {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [astroModalOpen, setAstroModalOpen] = useState(false);
 
+  // Synchronize authenticated profile if token is present
   useEffect(() => {
-    // Synchronize real JWT token in localStorage for authenticated backend endpoints
     const token = localStorage.getItem('shirimandir_token');
-    if (!token) {
-      authService.login('kaushal@example.com', 'HarHarMahadev@123')
-        .then(res => {
-          if (res.ok && res.data?.data?.user) {
-            setUser(res.data.data.user);
-          }
-        })
-        .catch(err => console.warn('Devotee auto-login notice:', err));
-    } else {
+    if (token) {
       authService.getProfile()
         .then(res => {
           if (res.ok && res.data?.data) {
             setUser(res.data.data);
+            localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data));
           }
         })
         .catch(err => console.warn('Profile fetch notice:', err));
@@ -148,30 +148,6 @@ export default function App() {
       // Ignored
     }
   }, [wishlist]);
-
-  // Handle switching between Devotee and Admin modes with proper role tokens
-  const handleToggleAdminMode = async (enableAdmin) => {
-    setIsAdminMode(enableAdmin);
-    if (enableAdmin) {
-      try {
-        const res = await authService.login('admin@shirimandir.org', 'HarHarMahadev@123');
-        if (res.ok && res.data?.data?.user) {
-          setUser(res.data.data.user);
-        }
-      } catch (err) {
-        console.warn('Admin mode authentication notice:', err);
-      }
-    } else {
-      try {
-        const res = await authService.login('kaushal@example.com', 'HarHarMahadev@123');
-        if (res.ok && res.data?.data?.user) {
-          setUser(res.data.data.user);
-        }
-      } catch (err) {
-        console.warn('Devotee mode authentication notice:', err);
-      }
-    }
-  };
 
   // Wishlist toggle handler
   const handleToggleWishlist = (templeId) => {
@@ -201,27 +177,39 @@ export default function App() {
   // Login & Booking Gate Enforcement
   const handleInitiateBooking = (service) => {
     if (!user) {
-      setPendingServiceToBookAfterLogin(service);
-      setLoginModalOpen(true);
+      navigate('/login');
+    } else if (!user.profile_completed) {
+      navigate('/complete-profile');
     } else {
       setActiveBookingService(service);
     }
   };
 
-  const handleLoginSuccess = (devoteeData) => {
-    setUser(devoteeData);
-    setLoginModalOpen(false);
-    if (pendingServiceToBookAfterLogin) {
-      setActiveBookingService(pendingServiceToBookAfterLogin);
-      setPendingServiceToBookAfterLogin(null);
-    }
+  // Called when user completes login/register or profile update
+  const handleUserAuthenticated = (userData) => {
+    setUser(userData);
+    localStorage.setItem('shirimandir_user', JSON.stringify(userData));
   };
 
+  // Logout handler
   const handleLogout = () => {
     authService.logout();
     setUser(null);
-    if (activeTab === 'account') {
-      setActiveTab('home');
+    navigate('/login', { replace: true });
+  };
+
+  // Role dashboard router helper
+  const handleOpenAccount = () => {
+    if (!user) {
+      navigate('/login');
+    } else if (!user.profile_completed) {
+      navigate('/complete-profile');
+    } else if (user.role === 'super_admin') {
+      navigate('/super-admin/dashboard');
+    } else if (user.role === 'admin') {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/devotee/dashboard');
     }
   };
 
@@ -274,137 +262,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans overflow-x-hidden">
-
-      {/* 1. Global Navigation Bar */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={handleNavClick}
-        user={user}
-        onOpenLogin={() => setLoginModalOpen(true)}
-        onLogout={handleLogout}
-        wishlistCount={wishlist.length}
-        onOpenWishlist={() => setWishlistDrawerOpen(true)}
-        isAdminMode={isAdminMode}
-        setIsAdminMode={handleToggleAdminMode}
-        onOpenAccount={() => setActiveTab('account')}
-      />
-
-      {/* 2. Main Page Render */}
-      <main className={`flex-1 ${activeTab !== 'home' ? 'pt-16 md:pt-20' : ''}`}>
-        {isAdminMode ? (
-          <AdminDashboard
-            onExitAdmin={() => handleToggleAdminMode(false)}
-            templesData={templesData}
-            onUpdateWaitTime={handleUpdateWaitTime}
-          />
-        ) : activeTab === 'account' ? (
-          <UserAccountDashboard
-            user={user}
-            onOpenReceipt={(rcp) => setReceiptModalData(rcp)}
-            wishlist={wishlist}
-            temples={templesData}
-            onSelectTemple={(temple) => setActiveTempleModal(temple)}
-          />
-        ) : activeTab === 'temples' ? (
-          <TempleDirectory
-            temples={templesData}
-            onSelectTemple={(temple) => setActiveTempleModal(temple)}
-            wishlist={wishlist}
-            onToggleWishlist={handleToggleWishlist}
-          />
-        ) : activeTab === 'pujas' ? (
-          <FeaturedPujasSection
-            onBookPuja={handleInitiateBooking}
-            selectedDeityFilter={selectedDeityFilter}
-          />
-        ) : activeTab === 'chadhava' ? (
-          <ChadhavaSection
-            onOfferChadhava={handleInitiateBooking}
-          />
-        ) : activeTab === 'yatra' ? (
-          <YatraPackagesSection
-            onBookYatra={handleInitiateBooking}
-          />
-        ) : (
-          /* ═══════════════════════════════════════════════
-             HOMEPAGE — Full Landing Page Section Flow
-             ═══════════════════════════════════════════════ */
-          <>
-            {/* 1. Hero — Bold headline, CTAs, trust stats, floating cards */}
-            <HeroSanctum
-              onExplorePujas={() => {
-                const el = document.getElementById('pujas-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              onViewDarshanQueue={() => {
-                const firstTemple = templesData[0];
-                setActiveTempleModal(firstTemple);
-              }}
-              selectedDeityFilter={selectedDeityFilter}
-              setSelectedDeityFilter={setSelectedDeityFilter}
-            />
-
-            {/* 2. Verified Temple Trust Badges — Statutory transparency layer */}
-            <VerifiedTrustBadges temples={templesData} />
-
-            {/* 3. Live Darshan Queue & Wait-Time Gauge */}
-            <LiveDarshanQueueSection
-              temples={templesData}
-              onSelectTemple={(temple) => setActiveTempleModal(temple)}
-              wishlist={wishlist}
-              onToggleWishlist={handleToggleWishlist}
-            />
-
-            {/* 4. Puja Offerings Section */}
-            <div id="pujas-section">
-              <FeaturedPujasSection
-                onBookPuja={handleInitiateBooking}
-                selectedDeityFilter={selectedDeityFilter}
-              />
-            </div>
-
-            {/* 5. Guided In-Person Darshan Assistance */}
-            <GuidedDarshanSection
-              onBookGuidedDarshan={handleInitiateBooking}
-            />
-
-            {/* 6. Yatra Packages */}
-            <YatraPackagesSection
-              onBookYatra={handleInitiateBooking}
-            />
-
-            {/* 7. Sacred Chadhava & Prasadam */}
-            <ChadhavaSection
-              onOfferChadhava={handleInitiateBooking}
-            />
-
-            {/* 8. Vedic Astro Tools */}
-            <AstroToolsModal isInline={true} />
-
-            {/* 9. Sanatan Community Wall */}
-            <SanatanWallSection
-              onShareExperience={() => alert('Thank you! Your experience has been shared with the community. 🙏')}
-            />
-
-            {/* 10. Testimonials */}
-            <TestimonialSection />
-
-            {/* 11. Referral & Community program */}
-            <ReferralSection />
-          </>
-        )}
-      </main>
-
-      {/* 3. Global Footer */}
-      <Footer onNavigate={handleNavClick} />
-
-      {/* ═══════════════════════════════════════════════
-         MODALS & SLIDE-OVERS
-         ═══════════════════════════════════════════════ */}
-
-      {/* Temple Detail Modal */}
+  // Render Modals helper
+  const renderSharedModals = () => (
+    <>
       {activeTempleModal && (
         <TempleDetailModal
           temple={activeTempleModal}
@@ -419,14 +279,19 @@ export default function App() {
         />
       )}
 
-      {/* Login & OTP Gate Modal */}
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
+        onLoginSuccess={(devoteeData) => {
+          handleUserAuthenticated(devoteeData);
+          setLoginModalOpen(false);
+          if (pendingServiceToBookAfterLogin) {
+            setActiveBookingService(pendingServiceToBookAfterLogin);
+            setPendingServiceToBookAfterLogin(null);
+          }
+        }}
       />
 
-      {/* Puja / Seva Booking Flow */}
       {activeBookingService && (
         <PujaBookingModal
           service={activeBookingService}
@@ -436,7 +301,6 @@ export default function App() {
         />
       )}
 
-      {/* Unified Tabbed Payment Modal */}
       {bookingDataForPayment && (
         <UnifiedPaymentModal
           bookingData={bookingDataForPayment}
@@ -445,7 +309,6 @@ export default function App() {
         />
       )}
 
-      {/* Booking Confirmation Modal */}
       {confirmationData && (
         <BookingConfirmationModal
           confirmationData={confirmationData}
@@ -453,12 +316,11 @@ export default function App() {
           onOpenReceipt={(rcp) => setReceiptModalData(rcp)}
           onGoToDashboard={() => {
             setConfirmationData(null);
-            setActiveTab('account');
+            handleOpenAccount();
           }}
         />
       )}
 
-      {/* 80G Tax Exemption Receipt Modal */}
       {receiptModalData && (
         <Receipt80GModal
           booking={receiptModalData}
@@ -466,21 +328,19 @@ export default function App() {
         />
       )}
 
-      {/* Dedicated Prasad Cart & Checkout Modal */}
       <PrasadCheckoutModal
         isOpen={prasadCheckoutOpen}
         onClose={() => setPrasadCheckoutOpen(false)}
         cart={prasadCart}
         setCart={setPrasadCart}
         user={user}
-        onOrderSuccess={(orderData) => {
+        onOrderSuccess={() => {
           setPrasadCheckoutOpen(false);
           setPrasadCart([]);
-          setActiveTab('account');
+          handleOpenAccount();
         }}
       />
 
-      {/* Multi-Temple Wishlist Drawer */}
       <WishlistDrawer
         isOpen={wishlistDrawerOpen}
         onClose={() => setWishlistDrawerOpen(false)}
@@ -493,7 +353,6 @@ export default function App() {
         }}
       />
 
-      {/* Secondary Tool Modals */}
       <PanchangModal
         isOpen={panchangModalOpen}
         onClose={() => setPanchangModalOpen(false)}
@@ -501,7 +360,217 @@ export default function App() {
       />
       <DevotionalLibraryModal isOpen={libraryModalOpen} onClose={() => setLibraryModalOpen(false)} />
       <AstroToolsModal isOpen={astroModalOpen} onClose={() => setAstroModalOpen(false)} />
+    </>
+  );
 
-    </div>
+  return (
+    <Routes>
+      {/* 1. Main Landing & Tab Pages */}
+      <Route
+        path="/"
+        element={
+          <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans overflow-x-hidden">
+            <Navbar
+              activeTab={activeTab}
+              setActiveTab={handleNavClick}
+              user={user}
+              onOpenLogin={() => navigate('/login')}
+              onLogout={handleLogout}
+              wishlistCount={wishlist.length}
+              onOpenWishlist={() => setWishlistDrawerOpen(true)}
+              isAdminMode={false}
+              setIsAdminMode={() => navigate('/admin/dashboard')}
+              onOpenAccount={handleOpenAccount}
+            />
+
+            <main className={`flex-1 ${activeTab !== 'home' ? 'pt-16 md:pt-20' : ''}`}>
+              {activeTab === 'account' ? (
+                <UserAccountDashboard
+                  user={user}
+                  onOpenReceipt={(rcp) => setReceiptModalData(rcp)}
+                  wishlist={wishlist}
+                  temples={templesData}
+                  onSelectTemple={(temple) => setActiveTempleModal(temple)}
+                />
+              ) : activeTab === 'temples' ? (
+                <TempleDirectory
+                  temples={templesData}
+                  onSelectTemple={(temple) => setActiveTempleModal(temple)}
+                  wishlist={wishlist}
+                  onToggleWishlist={handleToggleWishlist}
+                />
+              ) : activeTab === 'pujas' ? (
+                <FeaturedPujasSection
+                  onBookPuja={handleInitiateBooking}
+                  selectedDeityFilter={selectedDeityFilter}
+                />
+              ) : activeTab === 'chadhava' ? (
+                <ChadhavaSection
+                  onOfferChadhava={handleInitiateBooking}
+                />
+              ) : activeTab === 'yatra' ? (
+                <YatraPackagesSection
+                  onBookYatra={handleInitiateBooking}
+                />
+              ) : (
+                <>
+                  <HeroSanctum
+                    onExplorePujas={() => {
+                      const el = document.getElementById('pujas-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    onViewDarshanQueue={() => {
+                      const firstTemple = templesData[0];
+                      setActiveTempleModal(firstTemple);
+                    }}
+                    selectedDeityFilter={selectedDeityFilter}
+                    setSelectedDeityFilter={setSelectedDeityFilter}
+                  />
+
+                  <VerifiedTrustBadges temples={templesData} />
+
+                  <LiveDarshanQueueSection
+                    temples={templesData}
+                    onSelectTemple={(temple) => setActiveTempleModal(temple)}
+                    wishlist={wishlist}
+                    onToggleWishlist={handleToggleWishlist}
+                  />
+
+                  <div id="pujas-section">
+                    <FeaturedPujasSection
+                      onBookPuja={handleInitiateBooking}
+                      selectedDeityFilter={selectedDeityFilter}
+                    />
+                  </div>
+
+                  <GuidedDarshanSection
+                    onBookGuidedDarshan={handleInitiateBooking}
+                  />
+
+                  <YatraPackagesSection
+                    onBookYatra={handleInitiateBooking}
+                  />
+
+                  <ChadhavaSection
+                    onOfferChadhava={handleInitiateBooking}
+                  />
+
+                  <AstroToolsModal isInline={true} />
+
+                  <SanatanWallSection
+                    onShareExperience={() => alert('Thank you! Your experience has been shared with the community. 🙏')}
+                  />
+
+                  <TestimonialSection />
+
+                  <ReferralSection />
+                </>
+              )}
+            </main>
+
+            <Footer onNavigate={handleNavClick} />
+            {renderSharedModals()}
+          </div>
+        }
+      />
+
+      {/* 2. Login & Registration (Email only) */}
+      <Route
+        path="/login"
+        element={
+          <LoginPage
+            currentUser={user}
+            onAuthSuccess={handleUserAuthenticated}
+          />
+        }
+      />
+
+      {/* 3. Mandatory Devotee Profile Completion Gate */}
+      <Route
+        path="/complete-profile"
+        element={
+          <ProtectedRoute user={user} requireCompleted={false}>
+            <CompleteProfilePage
+              currentUser={user}
+              onProfileUpdated={handleUserAuthenticated}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 4. Devotee Dashboard */}
+      <Route
+        path="/devotee/dashboard"
+        element={
+          <ProtectedRoute user={user} allowedRoles={['devotee', 'admin', 'super_admin']}>
+            <DevoteeDashboardPage
+              user={user}
+              onLogout={handleLogout}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 5. Admin Dashboard (Devotees strictly blocked with 403) */}
+      <Route
+        path="/admin/dashboard"
+        element={
+          <ProtectedRoute user={user} allowedRoles={['admin', 'super_admin']}>
+            <div className="min-h-screen flex flex-col bg-ivory-50 text-charcoal-900 font-sans">
+              <header className="bg-white border-b border-ivory-300 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#d4a15a] to-[#c87d43] text-white flex items-center justify-center font-bold text-base shadow-xs">
+                    ॐ
+                  </div>
+                  <div>
+                    <span className="font-display font-bold text-lg text-charcoal-900">Shiri Mandir</span>
+                    <span className="ml-2 text-xs bg-[#d4a15a]/20 text-[#8a5b1a] font-bold px-2 py-0.5 rounded-full">
+                      Admin Portal
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => navigate('/')}
+                    className="text-xs font-semibold text-charcoal-700 hover:text-charcoal-900 border border-ivory-300 px-3.5 py-1.5 rounded-xl hover:bg-ivory-100 transition-colors"
+                  >
+                    Exit to Home
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="text-xs font-semibold bg-charcoal-900 hover:bg-charcoal-800 text-white px-3.5 py-1.5 rounded-xl transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </header>
+              <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+                <AdminDashboard
+                  onExitAdmin={() => navigate('/')}
+                  templesData={templesData}
+                  onUpdateWaitTime={handleUpdateWaitTime}
+                />
+              </div>
+            </div>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 6. Super Admin Dashboard (Devotee & Admin blocked) */}
+      <Route
+        path="/super-admin/dashboard"
+        element={
+          <ProtectedRoute user={user} allowedRoles={['super_admin']}>
+            <SuperAdminDashboard
+              currentUser={user}
+              onLogout={handleLogout}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 7. Fallback: Unknown routes redirect to Home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

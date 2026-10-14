@@ -10,35 +10,43 @@ export async function seedDatabase() {
   // 1. Seed Users (with hashed passwords)
   const passwordHash = await bcrypt.hash('HarHarMahadev@123', 10);
   
-  // Devotee with explicit consent opt-in
+  // Devotee with completed profile and consent
   await query(`
-    INSERT INTO users (id, name, email, password_hash, phone, role, gotra, rashi, nakshatra, consent_data_sharing, consent_timestamp, consent_ip_address)
+    INSERT INTO users (id, name, email, password_hash, phone, role, gotra, rashi, nakshatra, profile_completed, consent_data_sharing, consent_timestamp, consent_ip_address)
     VALUES 
-    (1, 'Kaushal Singh', 'kaushal@example.com', $1, '+919876543210', 'devotee', 'Kashyap', 'Dhanu', 'Moola', TRUE, CURRENT_TIMESTAMP, '127.0.0.1')
+    (1, 'Kaushal Singh', 'kaushal@example.com', $1, '+919876543210', 'devotee', 'Kashyap', 'Dhanu', 'Moola', TRUE, TRUE, CURRENT_TIMESTAMP, '127.0.0.1')
     ON CONFLICT (id) DO NOTHING;
   `, [passwordHash]);
 
-  // Devotee without consent (defaults to FALSE to test privacy enforcement)
+  // Devotee with completed profile without consent
   await query(`
-    INSERT INTO users (id, name, email, password_hash, phone, role, gotra, rashi, nakshatra, consent_data_sharing)
+    INSERT INTO users (id, name, email, password_hash, phone, role, gotra, rashi, nakshatra, profile_completed, consent_data_sharing)
     VALUES 
-    (2, 'Aarav Sharma', 'aarav@example.com', $1, '+919811122233', 'devotee', 'Bharadwaj', 'Mesh', 'Ashwini', FALSE)
+    (2, 'Aarav Sharma', 'aarav@example.com', $1, '+919811122233', 'devotee', 'Bharadwaj', 'Mesh', 'Ashwini', TRUE, FALSE)
     ON CONFLICT (id) DO NOTHING;
   `, [passwordHash]);
 
   // Temple Partner (Priest / Coordinator)
   await query(`
-    INSERT INTO users (id, name, email, password_hash, phone, role)
+    INSERT INTO users (id, name, email, password_hash, phone, role, profile_completed)
     VALUES 
-    (3, 'Pandit Kashi Nath Shastri', 'priest.kashi@shirimandir.org', $1, '+919450012345', 'temple_partner')
+    (3, 'Pandit Kashi Nath Shastri', 'priest.kashi@shirimandir.org', $1, '+919450012345', 'temple_partner', TRUE)
     ON CONFLICT (id) DO NOTHING;
   `, [passwordHash]);
 
   // Admin user
   await query(`
-    INSERT INTO users (id, name, email, password_hash, phone, role)
+    INSERT INTO users (id, name, email, password_hash, phone, role, profile_completed)
     VALUES 
-    (4, 'Shiri Mandir Compliance Admin', 'admin@shirimandir.org', $1, '+919999900000', 'admin')
+    (4, 'Shiri Mandir Compliance Admin', 'admin@shirimandir.org', $1, '+919999900000', 'admin', TRUE)
+    ON CONFLICT (id) DO NOTHING;
+  `, [passwordHash]);
+
+  // Super Admin user
+  await query(`
+    INSERT INTO users (id, name, email, password_hash, phone, role, profile_completed)
+    VALUES 
+    (5, 'Shiri Mandir Super Admin', 'superadmin@shirimandir.org', $1, '+919888877777', 'super_admin', TRUE)
     ON CONFLICT (id) DO NOTHING;
   `, [passwordHash]);
 

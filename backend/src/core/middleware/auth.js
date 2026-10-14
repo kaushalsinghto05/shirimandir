@@ -20,7 +20,9 @@ export async function authenticate(req, res, next) {
 
     // Retrieve fresh user record
     const { rows } = await query(
-      'SELECT id, name, email, phone, role, gotra, rashi, nakshatra, consent_data_sharing FROM users WHERE id = $1',
+      `SELECT id, name, email, phone, role, gotra, rashi, nakshatra, 
+              consent_data_sharing, profile_completed 
+       FROM users WHERE id = $1`,
       [decoded.userId]
     );
 
@@ -31,7 +33,12 @@ export async function authenticate(req, res, next) {
       });
     }
 
-    req.user = rows[0];
+    const user = rows[0];
+    req.user = {
+      ...user,
+      profile_completed: Boolean(user.profile_completed),
+      consent_data_sharing: Boolean(user.consent_data_sharing)
+    };
     next();
   } catch (err) {
     return res.status(401).json({
@@ -44,7 +51,7 @@ export async function authenticate(req, res, next) {
 
 /**
  * Role-Based Access Control (RBAC) Guard
- * Roles: 'devotee', 'temple_partner', 'admin'
+ * Supported roles: 'devotee', 'admin', 'super_admin', 'temple_partner'
  */
 export function requireRole(allowedRoles = []) {
   return (req, res, next) => {
@@ -67,6 +74,28 @@ export function requireRole(allowedRoles = []) {
 }
 
 /**
+ * Guard ensuring devotee has completed their profile
+ */
+export function requireProfileCompleted(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Please authenticate first'
+    });
+  }
+
+  if (!req.user.profile_completed) {
+    return res.status(403).json({
+      success: false,
+      error: 'Profile incomplete: Please complete your profile at /complete-profile before proceeding.',
+      profile_completed: false
+    });
+  }
+
+  next();
+}
+
+/**
  * Optional Authentication (attaches req.user if provided, otherwise continues)
  */
 export async function optionalAuth(req, res, next) {
@@ -80,10 +109,20 @@ export async function optionalAuth(req, res, next) {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, config.jwtSecret);
     const { rows } = await query(
-      'SELECT id, name, email, phone, role, gotra, rashi, nakshatra, consent_data_sharing FROM users WHERE id = $1',
+      `SELECT id, name, email, phone, role, gotra, rashi, nakshatra, 
+              consent_data_sharing, profile_completed 
+       FROM users WHERE id = $1`,
       [decoded.userId]
     );
-    req.user = rows.length > 0 ? rows[0] : null;
+    if (rows.length > 0) {
+      req.user = {
+        ...rows[0],
+        profile_completed: Boolean(rows[0].profile_completed),
+        consent_data_sharing: Boolean(rows[0].consent_data_sharing)
+      };
+    } else {
+      req.user = null;
+    }
   } catch {
     req.user = null;
   }

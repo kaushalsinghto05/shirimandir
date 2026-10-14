@@ -11,14 +11,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Compliance: users.consent_data_sharing defaults to false (explicit opt-in only)
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(150) NOT NULL DEFAULT '',
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
-    role VARCHAR(30) NOT NULL DEFAULT 'devotee' CHECK (role IN ('devotee', 'temple_partner', 'admin')),
+    role VARCHAR(30) NOT NULL DEFAULT 'devotee' CHECK (role IN ('devotee', 'admin', 'super_admin', 'temple_partner')),
     gotra VARCHAR(100),
     rashi VARCHAR(100),
     nakshatra VARCHAR(100),
+    profile_completed BOOLEAN NOT NULL DEFAULT FALSE,
     
     -- COMPLIANCE: Explicit opt-in for personal data sharing with temple partners
     consent_data_sharing BOOLEAN NOT NULL DEFAULT FALSE,

@@ -1,7 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Universal API Client for Shiri Mandir
+ * Features:
+ * - Bearer JWT authentication from localStorage
+ * - Global 401 interception: clears invalid/expired session and redirects to /login
  */
 export async function apiRequest(endpoint, { method = 'GET', body = null, headers = {} } = {}) {
   const token = localStorage.getItem('shirimandir_token');
@@ -25,7 +28,17 @@ export async function apiRequest(endpoint, { method = 'GET', body = null, header
 
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    const data = await res.json();
+
+    // Global 401 Session Expiry Interceptor
+    if (res.status === 401) {
+      localStorage.removeItem('shirimandir_token');
+      localStorage.removeItem('shirimandir_user');
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login?expired=1';
+      }
+    }
+
+    const data = await res.json().catch(() => null);
     return { ok: res.ok, status: res.status, data };
   } catch (err) {
     console.warn(`[API] Network error calling ${endpoint}:`, err.message);
@@ -36,84 +49,119 @@ export async function apiRequest(endpoint, { method = 'GET', body = null, header
 // ── Auth Services ──
 export const authService = {
   login: async (email, password) => {
-    const res = await apiRequest('/auth/login', { method: 'POST', body: { email, password } });
+    const res = await apiRequest('/auth/login', { 
+      method: 'POST', 
+      body: { email: email.trim(), password } 
+    });
     if (res.ok && res.data?.data?.token) {
       localStorage.setItem('shirimandir_token', res.data.data.token);
+      if (res.data.data.user) {
+        localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data.user));
+      }
     }
     return res;
   },
-  register: async (payload) => {
-    const res = await apiRequest('/auth/register', { method: 'POST', body: payload });
+
+  register: async ({ email, password }) => {
+    const res = await apiRequest('/auth/register', { 
+      method: 'POST', 
+      body: { email: email.trim(), password } 
+    });
     if (res.ok && res.data?.data?.token) {
       localStorage.setItem('shirimandir_token', res.data.data.token);
+      if (res.data.data.user) {
+        localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data.user));
+      }
     }
     return res;
   },
-  getProfile: () => apiRequest('/auth/me'),
-  updateConsent: (consent_data_sharing) => apiRequest('/auth/consent', { method: 'PUT', body: { consent_data_sharing } }),
+
+  completeProfile: async (profileData) => {
+    const res = await apiRequest('/auth/complete-profile', { 
+      method: 'PUT', 
+      body: profileData 
+    });
+    if (res.ok && res.data?.data?.token) {
+      localStorage.setItem('shirimandir_token', res.data.data.token);
+      if (res.data.data.user) {
+        localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data.user));
+      }
+    }
+    return res;
+  },
+
+  getProfile: async () => {
+    const res = await apiRequest('/auth/me');
+    if (res.ok && res.data?.data?.user) {
+      localStorage.setItem('shirimandir_user', JSON.stringify(res.data.data.user));
+    }
+    return res;
+  },
+
+  updateConsent: (consent_data_sharing) => 
+    apiRequest('/auth/consent', { method: 'PUT', body: { consent_data_sharing } }),
+
   logout: () => {
     localStorage.removeItem('shirimandir_token');
-  }
+    localStorage.removeItem('shirimandir_user');
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+  },
+
+  // Super Admin Role Management
+  getAllUsers: () => apiRequest('/auth/users'),
+  changeUserRole: (userId, role) => apiRequest(`/auth/users/${userId}/role`, { method: 'PUT', body: { role } }),
+  createAdmin: (adminData) => apiRequest('/auth/create-admin', { method: 'POST', body: adminData })
 };
 
 // ── Temple Services ──
 export const templeService = {
-  getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/temples${query ? `?${query}` : ''}`);
-  },
+  getAll: (params = '') => apiRequest(`/temples${params}`),
   getBySlug: (slug) => apiRequest(`/temples/${slug}`),
-  updateVerification: (templeId, payload) => apiRequest(`/temples/${templeId}/verification`, { method: 'PUT', body: payload })
+  create: (formData) => apiRequest('/temples', { method: 'POST', body: formData }),
+  updateVerification: (id, data) => apiRequest(`/temples/${id}/verification`, { method: 'PUT', body: data })
 };
 
-// ── Puja & Seva Services ──
+// ── Puja Services ──
 export const pujaService = {
-  getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/pujas${query ? `?${query}` : ''}`);
-  },
+  getAll: (params = '') => apiRequest(`/pujas${params}`),
   getById: (id) => apiRequest(`/pujas/${id}`)
 };
 
-// ── Prasad Store Services ──
+// ── Prasad Services ──
 export const prasadService = {
-  getAll: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/prasad${query ? `?${query}` : ''}`);
-  },
+  getAll: (params = '') => apiRequest(`/prasad${params}`),
   getById: (id) => apiRequest(`/prasad/${id}`),
+  create: (item) => apiRequest('/prasad', { method: 'POST', body: item }),
   approveFSSAI: (id) => apiRequest(`/prasad/${id}/approve-fssai`, { method: 'PUT' })
 };
 
 // ── Booking Services ──
 export const bookingService = {
-  create: (payload) => apiRequest('/bookings', { method: 'POST', body: payload }),
+  create: (booking) => apiRequest('/bookings', { method: 'POST', body: booking }),
   getMyBookings: () => apiRequest('/bookings/my'),
   getById: (id) => apiRequest(`/bookings/${id}`),
-  uploadProof: (id, payload) => apiRequest(`/bookings/${id}/proof`, { method: 'PUT', body: payload })
+  uploadProof: (id, proofData) => apiRequest(`/bookings/${id}/proof`, { method: 'PUT', body: proofData })
 };
 
 // ── Order Services ──
 export const orderService = {
-  calculateCheckout: (items) => apiRequest('/orders/calculate', { method: 'POST', body: { items } }),
-  create: (payload) => apiRequest('/orders', { method: 'POST', body: payload }),
-  getMyOrders: () => apiRequest('/orders/my'),
-  getById: (id) => apiRequest(`/orders/${id}`)
+  calculate: (items) => apiRequest('/orders/calculate', { method: 'POST', body: { items } }),
+  create: (order) => apiRequest('/orders', { method: 'POST', body: order }),
+  getMyOrders: () => apiRequest('/orders/my')
 };
 
 // ── Payment Services ──
 export const paymentService = {
   createIntent: (payload) => apiRequest('/payments/intent', { method: 'POST', body: payload }),
   verifyPayment: (payload) => apiRequest('/payments/verify', { method: 'POST', body: payload }),
-  simulateWebhook: (paymentCode, eventType = 'payment.captured') =>
-    apiRequest('/payments/simulate-webhook', { method: 'POST', body: { payment_code: paymentCode, event_type: eventType } }),
-  getByCode: (paymentCode) => apiRequest(`/payments/${paymentCode}`),
   getMyPayments: () => apiRequest('/payments/my')
 };
 
-// ── Refund & Cancellation Policy Services ──
+// ── Refund Services ──
 export const refundService = {
-  getCancellationPolicy: () => apiRequest('/refunds/policy'),
+  getPolicy: (bookingId) => apiRequest(`/refunds/policy?booking_id=${bookingId}`),
   requestRefund: (payload) => apiRequest('/refunds/request', { method: 'POST', body: payload }),
   getMyRefunds: () => apiRequest('/refunds/my')
 };

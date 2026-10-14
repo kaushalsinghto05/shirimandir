@@ -3,3 +3,4 @@ import { bookingService } from './booking.service.js';
 import { registerBookingEventSubscribers } from './booking.events.js';
 
 export { bookingRoutes, bookingService, registerBookingEventSubscribers };
+  
