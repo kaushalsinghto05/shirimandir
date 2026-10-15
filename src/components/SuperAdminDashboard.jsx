@@ -129,11 +129,23 @@ export default function SuperAdminDashboard({ currentUser, onLogout }) {
 
           <div className="flex items-center gap-2">
             <Link
+              to="/devotee/dashboard"
+              className="px-3.5 py-2 bg-charcoal-800 hover:bg-charcoal-700 text-xs font-semibold rounded-xl transition-all border border-charcoal-700 flex items-center gap-1.5"
+            >
+              <span>Devotee View</span>
+            </Link>
+            <Link
               to="/admin/dashboard"
               className="px-3.5 py-2 bg-charcoal-800 hover:bg-charcoal-700 text-xs font-semibold rounded-xl transition-all border border-charcoal-700 flex items-center gap-1.5"
             >
               <span>Operations Portal</span>
               <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+            <Link
+              to="/explore"
+              className="px-3.5 py-2 bg-charcoal-800 hover:bg-charcoal-700 text-xs font-semibold rounded-xl transition-all border border-charcoal-700 flex items-center gap-1.5"
+            >
+              <span>Explore</span>
             </Link>
             <button
               onClick={onLogout || authService.logout}

@@ -34,22 +34,22 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminDashboard from './components/SuperAdminDashboard';
 import DevoteeDashboardPage from './components/DevoteeDashboardPage';
 
-import { authService } from './services/api';
+import { authService, getStoredToken, clearStoredAuth, isTokenExpired } from './services/api';
 import { TEMPLES, FEATURED_PUJAS } from './data/mockData';
 
 /**
  * Root Gateway Component: Evaluates authentication state on app load and on "/" route.
- * 1. Reads saved token.
- * 2. If no token -> goes to /login.
+ * 1. Reads saved token (localStorage or cookie).
+ * 2. If no token -> goes to /login (or /login?expired=1 if expired).
  * 3. If token exists -> calls GET /api/auth/me (handled in App useEffect).
  * 4. While check is running, shows loading screen.
- * 5. If /me returns 401 (invalid/expired) -> goes to /login.
+ * 5. If /me returns 401 (invalid/expired) -> goes to /login?expired=1.
  * 6. If valid:
  *    - profile_completed = false -> /complete-profile
  *    - profile_completed = true  -> dashboard by role
  */
 function AppRootGate({ user, authLoading }) {
-  const token = localStorage.getItem('shirimandir_token');
+  const token = getStoredToken();
 
   // 4. While check is running, show loading screen. Do NOT redirect until it finishes.
   if (authLoading) {
@@ -67,10 +67,17 @@ function AppRootGate({ user, authLoading }) {
     );
   }
 
-  // 2. If no token -> go to /login.
-  // 5. If /me returns 401 -> clear token, go to /login.
+  // 2. If no token -> go to /login (or /login?expired=1 if session was expired).
+  // 5. If /me returns 401 -> clear token, go to /login?expired=1.
   if (!token || !user) {
-    return <Navigate to="/login" replace />;
+    const wasExpired = (() => {
+      try {
+        return sessionStorage.getItem('shirimandir_session_expired') === '1';
+      } catch {
+        return false;
+      }
+    })();
+    return <Navigate to={wasExpired ? "/login?expired=1" : "/login"} replace />;
   }
 
   // 6. If valid:
@@ -179,18 +186,20 @@ export default function App() {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [astroModalOpen, setAstroModalOpen] = useState(false);
 
-  // Initial App Load Verification: Checks token and calls GET /api/auth/me
+  // Initial App Load Verification: Checks token (localStorage or cookie) and calls GET /api/auth/me
   useEffect(() => {
     let isMounted = true;
-    const token = localStorage.getItem('shirimandir_token');
+    const token = getStoredToken();
 
+    // 2. If no token -> go to /login (authLoading false)
     if (!token) {
       setUser(null);
       setAuthLoading(false);
       return;
     }
 
-    // Call GET /api/auth/me to verify session
+    // 3. If token exists -> call GET /api/auth/me to verify it and get the user
+    // 4. While check is running, authLoading remains true
     authService.getProfile()
       .then(res => {
         if (!isMounted) return;
@@ -199,18 +208,28 @@ export default function App() {
           setUser(verifiedUser);
           localStorage.setItem('shirimandir_user', JSON.stringify(verifiedUser));
         } else {
-          // 401 or invalid token
-          localStorage.removeItem('shirimandir_token');
-          localStorage.removeItem('shirimandir_user');
+          // 5. If /me returns 401 (invalid or expired) -> clear the token, go to /login?expired=1
+          clearStoredAuth();
+          try {
+            sessionStorage.setItem('shirimandir_session_expired', '1');
+          } catch {}
           setUser(null);
+          if (window.location.pathname !== '/login') {
+            navigate('/login?expired=1', { replace: true });
+          }
         }
       })
       .catch(err => {
         if (!isMounted) return;
         console.warn('Auth verification notice:', err);
-        localStorage.removeItem('shirimandir_token');
-        localStorage.removeItem('shirimandir_user');
+        clearStoredAuth();
+        try {
+          sessionStorage.setItem('shirimandir_session_expired', '1');
+        } catch {}
         setUser(null);
+        if (window.location.pathname !== '/login') {
+          navigate('/login?expired=1', { replace: true });
+        }
       })
       .finally(() => {
         if (isMounted) {
@@ -219,7 +238,43 @@ export default function App() {
       });
 
     return () => { isMounted = false; };
-  }, []);
+  }, [navigate]);
+
+  // Proactive token expiration watcher:
+  // Detects token expiry in real time across any open page or dashboard tab
+  useEffect(() => {
+    const checkTokenLifecycle = () => {
+      let rawToken = null;
+      try {
+        rawToken = localStorage.getItem('shirimandir_token');
+      } catch {}
+      if (!rawToken && typeof document !== 'undefined') {
+        const match = document.cookie.match(/(?:^|;\s*)(?:shirimandir_token|token)=([^;]+)/);
+        if (match && match[1]) rawToken = decodeURIComponent(match[1]);
+      }
+
+      if (rawToken && isTokenExpired(rawToken)) {
+        clearStoredAuth();
+        try {
+          sessionStorage.setItem('shirimandir_session_expired', '1');
+        } catch {}
+        setUser(null);
+        if (window.location.pathname !== '/login') {
+          navigate('/login?expired=1', { replace: true });
+        }
+      }
+    };
+
+    const interval = setInterval(checkTokenLifecycle, 3000);
+    window.addEventListener('focus', checkTokenLifecycle);
+    document.addEventListener('visibilitychange', checkTokenLifecycle);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', checkTokenLifecycle);
+      document.removeEventListener('visibilitychange', checkTokenLifecycle);
+    };
+  }, [navigate]);
 
   useEffect(() => {
     try {
@@ -275,6 +330,9 @@ export default function App() {
   // Logout handler
   const handleLogout = () => {
     authService.logout();
+    try {
+      sessionStorage.removeItem('shirimandir_session_expired');
+    } catch {}
     setUser(null);
     navigate('/login', { replace: true });
   };
@@ -289,6 +347,39 @@ export default function App() {
       navigate('/super-admin/dashboard');
     } else if (user.role === 'admin') {
       navigate('/admin/dashboard');
+    } else {
+      navigate('/devotee/dashboard');
+    }
+  };
+
+  // Direct Devotee Dashboard opener
+  const handleOpenDevotee = () => {
+    if (!user) {
+      navigate('/login');
+    } else if (!user.profile_completed) {
+      navigate('/complete-profile');
+    } else {
+      navigate('/devotee/dashboard');
+    }
+  };
+
+  // Direct Admin Dashboard opener
+  const handleOpenAdmin = () => {
+    if (!user) {
+      navigate('/login');
+    } else if (!user.profile_completed) {
+      navigate('/complete-profile');
+    } else {
+      navigate('/admin/dashboard');
+    }
+  };
+
+  // Switch back to Devotee session
+  const handleSwitchToDevotee = () => {
+    if (!user) {
+      navigate('/login');
+    } else if (!user.profile_completed) {
+      navigate('/complete-profile');
     } else {
       navigate('/devotee/dashboard');
     }
@@ -455,9 +546,11 @@ export default function App() {
         onLogout={handleLogout}
         wishlistCount={wishlist.length}
         onOpenWishlist={() => setWishlistDrawerOpen(true)}
-        isAdminMode={false}
-        setIsAdminMode={() => navigate('/admin/dashboard')}
+        isAdminMode={user?.role === 'admin' || user?.role === 'super_admin'}
+        setIsAdminMode={handleOpenAdmin}
         onOpenAccount={handleOpenAccount}
+        onOpenDevotee={handleOpenDevotee}
+        onOpenAdmin={handleOpenAdmin}
       />
 
       <main className={`flex-1 ${activeTab !== 'home' ? 'pt-16 md:pt-20' : ''}`}>
@@ -663,6 +756,13 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      {/* Role and Portal Navigation Aliases */}
+      <Route path="/devotee" element={<Navigate to="/devotee/dashboard" replace />} />
+      <Route path="/portal" element={<Navigate to="/devotee/dashboard" replace />} />
+      <Route path="/account" element={<Navigate to="/devotee/dashboard" replace />} />
+      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
 
       {/* 8. Fallback: Unknown routes redirect to Home gate */}
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,13 +1,111 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 /**
+ * Decodes JWT and determines if expiration has elapsed.
+ * Returns true if token is missing, invalid, or expired.
+ */
+export function isTokenExpired(token) {
+  if (!token || typeof token !== 'string') return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(jsonPayload);
+    if (!payload.exp) return false;
+    // Check if expired (allowing 1s margin for clock differences)
+    return payload.exp * 1000 <= Date.now() + 1000;
+  } catch {
+    return true; // Malformed token treated as expired
+  }
+}
+
+/**
+ * Universal Token and Session Helpers
+ * Checks both localStorage and document.cookie
+ * Automatically invalidates and purges expired tokens
+ */
+export function getStoredToken() {
+  if (typeof window === 'undefined') return null;
+  let token = null;
+
+  // 1. Check localStorage
+  try {
+    const local = localStorage.getItem('shirimandir_token');
+    if (local && local !== 'null' && local !== 'undefined' && local.trim() !== '') {
+      token = local;
+    }
+  } catch {}
+
+  // 2. Check document.cookie
+  if (!token) {
+    try {
+      if (typeof document !== 'undefined' && document.cookie) {
+        const match = document.cookie.match(/(?:^|;\s*)(?:shirimandir_token|token)=([^;]+)/);
+        if (match && match[1] && match[1] !== 'null' && match[1] !== 'undefined') {
+          token = decodeURIComponent(match[1]);
+        }
+      }
+    } catch {}
+  }
+
+  // 3. Proactive token expiration verification
+  if (token) {
+    if (isTokenExpired(token)) {
+      clearStoredAuth();
+      try {
+        sessionStorage.setItem('shirimandir_session_expired', '1');
+      } catch {}
+      return null;
+    }
+    return token;
+  }
+
+  return null;
+}
+
+export function setStoredToken(token) {
+  if (typeof window === 'undefined' || !token) return;
+  try {
+    localStorage.setItem('shirimandir_token', token);
+    sessionStorage.removeItem('shirimandir_session_expired');
+  } catch {}
+  try {
+    const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `shirimandir_token=${encodeURIComponent(token)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax${secureFlag}`;
+  } catch {}
+}
+
+export function clearStoredAuth() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('shirimandir_token');
+    localStorage.removeItem('shirimandir_user');
+  } catch {}
+  try {
+    sessionStorage.removeItem('shirimandir_token');
+  } catch {}
+  try {
+    document.cookie = 'shirimandir_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;';
+    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;';
+  } catch {}
+}
+
+/**
  * Universal API Client for Shiri Mandir
  * Features:
- * - Bearer JWT authentication from localStorage
- * - Global 401 interception: clears invalid/expired session and redirects to /login
+ * - Bearer JWT authentication from localStorage or cookies
+ * - Transmits cookies with credentials: 'include'
+ * - Cleanses token on 401 unauthorized & redirects to /login?expired=1
  */
 export async function apiRequest(endpoint, { method = 'GET', body = null, headers = {} } = {}) {
-  const token = localStorage.getItem('shirimandir_token');
+  const token = getStoredToken();
   const customHeaders = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -30,11 +128,12 @@ export async function apiRequest(endpoint, { method = 'GET', body = null, header
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-    // Global 401 Session Expiry Interceptor
+    // Global 401 Session Expiry Interceptor: clear stale tokens and redirect to login
     if (res.status === 401) {
-      localStorage.removeItem('shirimandir_token');
-      localStorage.removeItem('shirimandir_user');
-      document.cookie = 'shirimandir_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      clearStoredAuth();
+      try {
+        sessionStorage.setItem('shirimandir_session_expired', '1');
+      } catch {}
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
         window.location.href = '/login?expired=1';
       }
@@ -58,21 +157,21 @@ export const authService = {
     if (res.ok && res.data?.data) {
       const token = res.data.data.token;
       const user = res.data.data.user || res.data.data;
-      if (token) localStorage.setItem('shirimandir_token', token);
+      if (token) setStoredToken(token);
       if (user && user.id) localStorage.setItem('shirimandir_user', JSON.stringify(user));
     }
     return res;
   },
 
-  register: async ({ email, password }) => {
+  register: async ({ email, password, ...rest }) => {
     const res = await apiRequest('/auth/register', { 
       method: 'POST', 
-      body: { email: email.trim(), password } 
+      body: { email: email.trim(), password, ...rest } 
     });
     if (res.ok && res.data?.data) {
       const token = res.data.data.token;
       const user = res.data.data.user || res.data.data;
-      if (token) localStorage.setItem('shirimandir_token', token);
+      if (token) setStoredToken(token);
       if (user && user.id) localStorage.setItem('shirimandir_user', JSON.stringify(user));
     }
     return res;
@@ -86,7 +185,7 @@ export const authService = {
     if (res.ok && res.data?.data) {
       const token = res.data.data.token;
       const user = res.data.data.user || res.data.data;
-      if (token) localStorage.setItem('shirimandir_token', token);
+      if (token) setStoredToken(token);
       if (user && user.id) localStorage.setItem('shirimandir_user', JSON.stringify(user));
     }
     return res;
@@ -99,21 +198,18 @@ export const authService = {
       if (user && user.id) {
         localStorage.setItem('shirimandir_user', JSON.stringify(user));
       }
+    } else if (res.status === 401) {
+      clearStoredAuth();
     }
     return res;
   },
 
+  logout: () => {
+    clearStoredAuth();
+  },
+
   updateConsent: (consent_data_sharing) => 
     apiRequest('/auth/consent', { method: 'PUT', body: { consent_data_sharing } }),
-
-  logout: () => {
-    localStorage.removeItem('shirimandir_token');
-    localStorage.removeItem('shirimandir_user');
-    document.cookie = 'shirimandir_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
-  },
 
   // Super Admin Role Management
   getAllUsers: () => apiRequest('/auth/users'),

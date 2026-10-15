@@ -1,15 +1,16 @@
 import React from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { ShieldAlert, ArrowLeft, Lock } from 'lucide-react';
+import { getStoredToken } from '../services/api';
 
 export default function ProtectedRoute({ 
   user, 
-  authLoading = false,
+  authLoading = false, 
   allowedRoles, 
   requireCompleted = true, 
   children 
 }) {
-  const token = localStorage.getItem('shirimandir_token');
+  const token = getStoredToken();
 
   // 1. While auth check is running, show loading screen. Do NOT redirect until it finishes.
   if (authLoading) {
@@ -27,9 +28,9 @@ export default function ProtectedRoute({
     );
   }
 
-  // 2. Session check: if not authenticated, redirect to /login
+  // 2. Session check: if not authenticated or token expired, redirect to /login?expired=1
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login?expired=1" replace />;
   }
 
   const activeUser = user || (() => {
@@ -42,7 +43,7 @@ export default function ProtectedRoute({
   })();
 
   if (!activeUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login?expired=1" replace />;
   }
 
   // 3. Profile completion check: must complete profile before any dashboard

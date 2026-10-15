@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { Lock, Mail, AlertCircle, CheckCircle2, ArrowRight, ShieldCheck } from 'lucide-react';
-import { authService } from '../services/api';
+import { authService, getStoredToken, clearStoredAuth } from '../services/api';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -31,54 +31,122 @@ export default function LoginPage({ currentUser, authLoading = false, onAuthSucc
     return '/devotee/dashboard';
   };
 
-  // Check if session expired query parameter is present
+  // Check if session expired query parameter is present or session was marked expired
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('expired') === '1') {
+    const hasExpiredParam = params.get('expired') === '1';
+    let hasExpiredSession = false;
+    try {
+      hasExpiredSession = sessionStorage.getItem('shirimandir_session_expired') === '1';
+    } catch {}
+
+    if (hasExpiredParam || hasExpiredSession) {
       setErrorMsg('Your session has expired. Please log in again.');
+      clearStoredAuth();
+      try {
+        sessionStorage.removeItem('shirimandir_session_expired');
+      } catch {}
     }
   }, [location.search]);
 
-  // If already logged in, redirect forward immediately (waits until auth check finishes)
+  // Synchronize browser autofilled credentials with component state
   useEffect(() => {
-    if (authLoading) return;
-    const token = localStorage.getItem('shirimandir_token');
-    const activeUser = currentUser || (() => {
-      try {
-        const savedUserStr = localStorage.getItem('shirimandir_user');
-        return savedUserStr ? JSON.parse(savedUserStr) : null;
-      } catch {
-        return null;
+    const syncAutofill = () => {
+      const emailEl = document.querySelector('input[type="email"]');
+      const passEl = document.querySelector('input[type="password"]');
+      if (emailEl && emailEl.value && !email) {
+        setEmail(emailEl.value);
       }
-    })();
+      if (passEl && passEl.value && !password) {
+        setPassword(passEl.value);
+      }
+    };
 
-    if (token && activeUser && activeUser.id) {
-      navigate(redirectDestination(activeUser), { replace: true });
+    const t1 = setTimeout(syncAutofill, 80);
+    const t2 = setTimeout(syncAutofill, 300);
+    const t3 = setTimeout(syncAutofill, 700);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+
+  const token = getStoredToken();
+  const activeUser = currentUser || (() => {
+    try {
+      const savedUserStr = localStorage.getItem('shirimandir_user');
+      return savedUserStr ? JSON.parse(savedUserStr) : null;
+    } catch {
+      return null;
     }
-  }, [authLoading, currentUser, navigate]);
+  })();
+
+  // 4. While auth check is running, show loading screen. Do NOT redirect until it finishes.
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#FEFDFB] flex flex-col items-center justify-center font-sans text-charcoal-900">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#d4a15a] to-[#c87d43] text-white flex items-center justify-center font-bold text-2xl shadow-md animate-pulse mb-4">
+          ॐ
+        </div>
+        <div className="flex items-center gap-2 text-sm font-semibold text-charcoal-800">
+          <span className="w-2 h-2 rounded-full bg-copper-500 animate-ping"></span>
+          <span>Checking session...</span>
+        </div>
+        <p className="text-xs text-charcoal-500 mt-1">Verifying your sanctum credentials</p>
+      </div>
+    );
+  }
+
+  // A logged-in user visiting /login is redirected onward, not shown login.
+  // ONLY if not expired and token is valid!
+  const searchParams = new URLSearchParams(location.search);
+  const isExplicitExpired = searchParams.get('expired') === '1';
+  if (!isExplicitExpired && token && activeUser && activeUser.id) {
+    return <Navigate to={redirectDestination(activeUser)} replace />;
+  }
+
+  // Populate Demo Role Credentials into login form (user reviews and clicks Sign In)
+  const handleSelectDemoRole = (demoEmail, demoPassword, roleTitle) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setActiveTab('login');
+    setErrorMsg('');
+    setSuccessMsg(`${roleTitle} credentials loaded. Please click "Sign In to Sanctum" below to log in.`);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
 
+    // Capture values directly from DOM in case browser autofilled without firing React onChange
+    const formEl = e.currentTarget;
+    const domEmail = formEl.querySelector('input[type="email"]')?.value || '';
+    const domPassword = formEl.querySelector('input[type="password"]')?.value || '';
+
+    const effectiveEmail = (email || domEmail).trim();
+    const effectivePassword = password || domPassword;
+
+    if (effectiveEmail && !email) setEmail(effectiveEmail);
+    if (effectivePassword && !password) setPassword(effectivePassword);
+
     // 1. Validate email format
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
+    if (!effectiveEmail) {
       setErrorMsg('Please enter your email address.');
       return;
     }
-    if (!EMAIL_REGEX.test(trimmedEmail)) {
+    if (!EMAIL_REGEX.test(effectiveEmail)) {
       setErrorMsg('Please enter a valid email format (e.g. devotee@example.com).');
       return;
     }
 
     // 2. Validate password minimum length (8 characters)
-    if (!password) {
+    if (!effectivePassword) {
       setErrorMsg('Please enter your password.');
       return;
     }
-    if (password.length < 8) {
+    if (effectivePassword.length < 8) {
       setErrorMsg('Password must be at least 8 characters long.');
       return;
     }
@@ -87,7 +155,7 @@ export default function LoginPage({ currentUser, authLoading = false, onAuthSucc
 
     try {
       if (activeTab === 'login') {
-        const res = await authService.login(trimmedEmail, password);
+        const res = await authService.login(effectiveEmail, effectivePassword);
         if (res.ok && res.data?.data) {
           const userObj = res.data.data.user || res.data.data;
           setSuccessMsg(`Authentication successful! Welcome back, ${userObj.name || userObj.email}.`);
@@ -199,12 +267,25 @@ export default function LoginPage({ currentUser, authLoading = false, onAuthSucc
           {/* Form (Email + Password only) */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-charcoal-700 mb-1">
-                Email Address
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="email" className="block text-xs font-semibold text-charcoal-700">
+                  Email Address
+                </label>
+                {email && (
+                  <button
+                    type="button"
+                    onClick={() => setEmail('')}
+                    className="text-[10px] text-copper-600 hover:text-copper-700 font-medium cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <Mail className="w-4 h-4 text-charcoal-400 absolute left-3.5 top-3" />
                 <input
+                  id="email"
+                  name="email"
                   type="email"
                   required
                   value={email}
@@ -218,12 +299,14 @@ export default function LoginPage({ currentUser, authLoading = false, onAuthSucc
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-charcoal-700 mb-1">
+              <label htmlFor="password" className="block text-xs font-semibold text-charcoal-700 mb-1">
                 Password
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-charcoal-400 absolute left-3.5 top-3" />
                 <input
+                  id="password"
+                  name="password"
                   type="password"
                   required
                   value={password}
@@ -259,44 +342,38 @@ export default function LoginPage({ currentUser, authLoading = false, onAuthSucc
 
           {/* Quick seeded demo helper */}
           <div className="mt-6 pt-5 border-t border-ivory-200">
-            <p className="text-[11px] font-semibold text-charcoal-600 mb-2">
+            <p className="text-[11px] font-semibold text-charcoal-700 mb-2">
               Pre-Configured Seeded Accounts (for demo testing):
             </p>
-            <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+            <div className="grid grid-cols-3 gap-2 text-xs">
               <button
                 type="button"
-                onClick={() => {
-                  setEmail('kaushal@example.com');
-                  setPassword('HarHarMahadev@123');
-                  setActiveTab('login');
-                }}
-                className="p-1.5 rounded-lg bg-ivory-100 hover:bg-copper-50 text-charcoal-700 border border-ivory-200 text-center"
+                onClick={() => handleSelectDemoRole('kaushal@example.com', 'HarHarMahadev@123', 'Devotee')}
+                className="py-2.5 px-1.5 rounded-xl bg-ivory-100 hover:bg-copper-100 hover:text-copper-900 text-charcoal-800 font-bold border border-ivory-300 text-center transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer flex flex-col items-center justify-center"
               >
-                Devotee
+                <span>Devotee</span>
+                <span className="text-[9px] font-normal text-charcoal-500 truncate max-w-full">kaushal@...</span>
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setEmail('admin@shirimandir.org');
-                  setPassword('HarHarMahadev@123');
-                  setActiveTab('login');
-                }}
-                className="p-1.5 rounded-lg bg-ivory-100 hover:bg-copper-50 text-charcoal-700 border border-ivory-200 text-center"
+                onClick={() => handleSelectDemoRole('admin@shirimandir.org', 'HarHarMahadev@123', 'Admin')}
+                className="py-2.5 px-1.5 rounded-xl bg-[#d4a15a]/20 hover:bg-[#d4a15a]/35 text-[#8a5b1a] font-bold border border-[#d4a15a]/40 text-center transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer flex flex-col items-center justify-center"
               >
-                Admin
+                <span>Admin</span>
+                <span className="text-[9px] font-normal text-[#8a5b1a]/80 truncate max-w-full">admin@...</span>
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setEmail('superadmin@shirimandir.org');
-                  setPassword('HarHarMahadev@123');
-                  setActiveTab('login');
-                }}
-                className="p-1.5 rounded-lg bg-ivory-100 hover:bg-copper-50 text-charcoal-700 border border-ivory-200 text-center"
+                onClick={() => handleSelectDemoRole('superadmin@shirimandir.org', 'HarHarMahadev@123', 'Super Admin')}
+                className="py-2.5 px-1.5 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 text-white font-bold border border-charcoal-900 text-center transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer flex flex-col items-center justify-center"
               >
-                Super Admin
+                <span>Super Admin</span>
+                <span className="text-[9px] font-normal text-charcoal-300 truncate max-w-full">superadmin@...</span>
               </button>
             </div>
+            <p className="text-[10px] text-charcoal-500 mt-2 text-center">
+              Click any role above to pre-fill the form, then click &ldquo;Sign In to Sanctum&rdquo;.
+            </p>
           </div>
 
           {/* Bottom Security Seals */}

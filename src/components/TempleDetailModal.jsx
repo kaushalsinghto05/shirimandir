@@ -60,7 +60,13 @@ export default function TempleDetailModal({ temple, onClose, onBookService, onAd
             </h2>
             <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-ivory-200 mt-2 font-sans">
               <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-copper-400" /> {temple.location}</span>
-              <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-temple-gold-400" /> {temple.timings || '04:00 AM - 11:00 PM'}</span>
+              <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-temple-gold-400" /> {
+                typeof temple.timings === 'string'
+                  ? temple.timings
+                  : Array.isArray(temple.timings) && temple.timings.length > 0
+                    ? `${temple.timings[0]?.time?.split(' - ')[0] || '04:00 AM'} - ${temple.timings[temple.timings.length - 1]?.time?.split(' - ')[1] || '11:00 PM'}`
+                    : '04:00 AM - 11:00 PM'
+              }</span>
               <span className="text-temple-gold-300 font-medium">Deity: {temple.deity}</span>
             </div>
           </div>
@@ -240,6 +246,27 @@ export default function TempleDetailModal({ temple, onClose, onBookService, onAd
                 <p>{temple.history || temple.description}</p>
                 {temple.significance && <p className="pt-2 font-medium text-charcoal-900">{temple.significance}</p>}
               </div>
+
+              {/* Sanctum Timings & Aarti Schedule */}
+              {Array.isArray(temple.timings) && temple.timings.length > 0 && (
+                <div className="p-4 rounded-2xl bg-ivory-100 border border-ivory-200 space-y-2">
+                  <span className="text-xs uppercase font-bold text-charcoal-700 tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-copper-600" />
+                    Daily Sanctum Aarti & Darshan Schedule
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {temple.timings.map((t, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs bg-white px-3.5 py-2.5 rounded-xl border border-ivory-200">
+                        <div>
+                          <p className="font-bold text-charcoal-900">{t.name}</p>
+                          <p className="text-[10px] text-charcoal-500">{t.type}</p>
+                        </div>
+                        <span className="font-mono text-copper-600 font-bold">{t.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Legal Affiliation Transparency Box */}
               <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-2">

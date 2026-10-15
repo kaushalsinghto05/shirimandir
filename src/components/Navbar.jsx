@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Heart, User, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Heart, User, ChevronDown, LogOut, LayoutDashboard, Shield } from 'lucide-react';
 
 export default function Navbar({
   activeTab,
@@ -11,7 +11,9 @@ export default function Navbar({
   onOpenWishlist,
   isAdminMode,
   setIsAdminMode,
-  onOpenAccount
+  onOpenAccount,
+  onOpenDevotee,
+  onOpenAdmin
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -175,19 +177,19 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Admin Toggle */}
-            <button 
-              onClick={() => setIsAdminMode(!isAdminMode)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-300 ${
-                isAdminMode 
-                  ? 'bg-[#d4a15a] text-[#1a1733] border-[#d4a15a] font-bold shadow-sm' 
-                  : (isDarkHero 
-                      ? 'border-[#d4a15a]/40 text-[#f5d89f] hover:bg-[#d4a15a]/15 hover:border-[#d4a15a]' 
-                      : 'border-ivory-300 text-charcoal-700 hover:bg-ivory-100')
-              }`}
-            >
-              Admin
-            </button>
+            {/* Admin Portal Button — ONLY visible to Admin / Super Admin */}
+            {(user?.role === 'admin' || user?.role === 'super_admin') && (
+              <button 
+                onClick={() => {
+                  if (onOpenAdmin) onOpenAdmin();
+                  else if (setIsAdminMode) setIsAdminMode(true);
+                }}
+                className="text-xs font-semibold px-3.5 py-1.5 rounded-full border border-[#d4a15a] bg-[#d4a15a] text-[#1a1733] font-bold shadow-sm flex items-center gap-1.5 transition-all hover:bg-[#c5914a]"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Admin Panel</span>
+              </button>
+            )}
 
             {/* User Profile or Login */}
             {user ? (
@@ -204,20 +206,88 @@ export default function Navbar({
                 </button>
 
                 {profileDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-56 rounded-xl bg-ivory-50 shadow-elevated border border-ivory-200 py-2 animate-scale-in z-50">
+                  <div className="absolute top-full right-0 mt-2 w-60 rounded-xl bg-ivory-50 shadow-elevated border border-ivory-200 py-2 animate-scale-in z-50">
                     <div className="px-4 py-2 border-b border-ivory-200 mb-1">
-                      <p className="text-sm font-semibold text-charcoal-900">{user.name || 'Devotee'}</p>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <p className="text-sm font-semibold text-charcoal-900 truncate">{user.name || 'Devotee'}</p>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-copper-100 text-copper-800 border border-copper-200 shrink-0">
+                          {user.role || 'devotee'}
+                        </span>
+                      </div>
                       <p className="text-xs text-charcoal-500 truncate">{user.phone || user.email || 'Devotee Account'}</p>
                     </div>
-                    <button 
-                      onClick={() => { setActiveTab('account'); onOpenAccount?.(); setProfileDropdownOpen(false); }} 
-                      className="flex items-center w-full px-4 py-2 text-sm text-charcoal-700 hover:bg-ivory-100 hover:text-copper-600 transition-colors"
-                    >
-                      <LayoutDashboard className="w-4 h-4 mr-3 text-copper-500" /> Dashboard
-                    </button>
+
+                    {/* DEVOTEE ONLY LINKS */}
+                    {user.role === 'devotee' && (
+                      <>
+                        <button 
+                          onClick={() => { 
+                            if (onOpenDevotee) onOpenDevotee();
+                            else if (onOpenAccount) onOpenAccount();
+                            else setActiveTab('account'); 
+                            setProfileDropdownOpen(false); 
+                          }} 
+                          className="flex items-center w-full px-4 py-2 text-sm text-charcoal-700 hover:bg-ivory-100 hover:text-copper-600 transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4 mr-3 text-copper-500" /> Devotee Dashboard
+                        </button>
+
+                        <button 
+                          onClick={() => { 
+                            if (onOpenWishlist) onOpenWishlist();
+                            setProfileDropdownOpen(false); 
+                          }} 
+                          className="flex items-center w-full px-4 py-2 text-sm text-charcoal-700 hover:bg-ivory-100 hover:text-copper-600 transition-colors"
+                        >
+                          <Heart className="w-4 h-4 mr-3 text-vermilion-500" /> My Saved Temples ({wishlistCount})
+                        </button>
+                      </>
+                    )}
+
+                    {/* ADMIN ONLY LINKS */}
+                    {user.role === 'admin' && (
+                      <>
+                        <button 
+                          onClick={() => { 
+                            if (onOpenAdmin) onOpenAdmin();
+                            else if (setIsAdminMode) setIsAdminMode(true);
+                            setProfileDropdownOpen(false); 
+                          }} 
+                          className="flex items-center w-full px-4 py-2 text-sm text-amber-900 hover:bg-amber-50 hover:text-amber-800 transition-colors font-medium"
+                        >
+                          <Shield className="w-4 h-4 mr-3 text-amber-600" /> Admin Panel Dashboard
+                        </button>
+                      </>
+                    )}
+
+                    {/* SUPER ADMIN ONLY LINKS */}
+                    {user.role === 'super_admin' && (
+                      <>
+                        <button 
+                          onClick={() => { 
+                            window.location.href = '/super-admin/dashboard';
+                            setProfileDropdownOpen(false); 
+                          }} 
+                          className="flex items-center w-full px-4 py-2 text-sm text-charcoal-900 hover:bg-ivory-100 font-semibold transition-colors"
+                        >
+                          <Shield className="w-4 h-4 mr-3 text-[#d4a15a]" /> Super Admin Dashboard
+                        </button>
+                        <button 
+                          onClick={() => { 
+                            if (onOpenAdmin) onOpenAdmin();
+                            else if (setIsAdminMode) setIsAdminMode(true);
+                            setProfileDropdownOpen(false); 
+                          }} 
+                          className="flex items-center w-full px-4 py-2 text-sm text-amber-900 hover:bg-amber-50 transition-colors font-medium"
+                        >
+                          <Shield className="w-4 h-4 mr-3 text-amber-600" /> Admin Panel Dashboard
+                        </button>
+                      </>
+                    )}
+
                     <button 
                       onClick={() => { onLogout(); setProfileDropdownOpen(false); }} 
-                      className="flex items-center w-full px-4 py-2 text-sm text-vermilion-600 hover:bg-vermilion-50 transition-colors"
+                      className="flex items-center w-full px-4 py-2 text-sm text-vermilion-600 hover:bg-vermilion-50 transition-colors border-t border-ivory-100 mt-1"
                     >
                       <LogOut className="w-4 h-4 mr-3" /> Logout
                     </button>
@@ -318,24 +388,58 @@ export default function Navbar({
             </div>
 
             <div className="p-4 border-t border-ivory-200 space-y-3 bg-ivory-100/50">
-              <div className="flex justify-between items-center px-4 py-2 bg-ivory-50 rounded-xl border border-ivory-200">
-                <span className="text-xs font-semibold text-charcoal-700">Admin Mode</span>
-                <button 
-                  onClick={() => setIsAdminMode(!isAdminMode)}
-                  className={`w-10 h-5 rounded-full transition-colors relative ${isAdminMode ? 'bg-copper-500' : 'bg-charcoal-300'}`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${isAdminMode ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
-              </div>
-
               {user ? (
                 <>
-                  <button 
-                    onClick={() => { setActiveTab('account'); onOpenAccount?.(); setMobileMenuOpen(false); }} 
-                    className="w-full flex items-center px-4 py-2.5 text-charcoal-800 bg-ivory-50 border border-ivory-200 rounded-xl font-medium text-sm"
-                  >
-                    <User className="w-4 h-4 mr-3 text-copper-500" /> Account Dashboard
-                  </button>
+                  <div className="px-4 py-2 bg-ivory-50 rounded-xl border border-ivory-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-charcoal-900 truncate">{user.name || 'Devotee'}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-copper-100 text-copper-800">
+                        {user.role || 'devotee'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Devotee specific menu */}
+                  {user.role === 'devotee' && (
+                    <>
+                      <button 
+                        onClick={() => { 
+                          if (onOpenDevotee) onOpenDevotee();
+                          else if (onOpenAccount) onOpenAccount();
+                          else setActiveTab('account'); 
+                          setMobileMenuOpen(false); 
+                        }} 
+                        className="w-full flex items-center px-4 py-2.5 text-charcoal-800 bg-ivory-50 border border-ivory-200 rounded-xl font-medium text-sm hover:bg-copper-50 transition-colors"
+                      >
+                        <LayoutDashboard className="w-4 h-4 mr-3 text-copper-500" /> Devotee Dashboard
+                      </button>
+
+                      <button 
+                        onClick={() => { 
+                          if (onOpenWishlist) onOpenWishlist();
+                          setMobileMenuOpen(false); 
+                        }} 
+                        className="w-full flex items-center px-4 py-2.5 text-charcoal-800 bg-ivory-50 border border-ivory-200 rounded-xl font-medium text-sm hover:bg-copper-50 transition-colors"
+                      >
+                        <Heart className="w-4 h-4 mr-3 text-vermilion-500" /> Saved Temples ({wishlistCount})
+                      </button>
+                    </>
+                  )}
+
+                  {/* Admin specific menu */}
+                  {(user.role === 'admin' || user.role === 'super_admin') && (
+                    <button 
+                      onClick={() => { 
+                        if (onOpenAdmin) onOpenAdmin();
+                        else if (setIsAdminMode) setIsAdminMode(true);
+                        setMobileMenuOpen(false); 
+                      }} 
+                      className="w-full flex items-center px-4 py-2.5 text-[#1a1733] bg-[#d4a15a] border border-[#d4a15a] rounded-xl font-bold text-sm hover:bg-[#c5914a] transition-colors shadow-xs"
+                    >
+                      <Shield className="w-4 h-4 mr-3" /> Admin Panel Dashboard
+                    </button>
+                  )}
+
                   <button 
                     onClick={() => { onLogout(); setMobileMenuOpen(false); }} 
                     className="w-full flex items-center px-4 py-2.5 text-vermilion-600 bg-vermilion-50 rounded-xl font-medium text-sm"

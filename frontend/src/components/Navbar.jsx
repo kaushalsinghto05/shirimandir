@@ -175,19 +175,21 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Admin Toggle */}
-            <button 
-              onClick={() => setIsAdminMode(!isAdminMode)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-300 ${
-                isAdminMode 
-                  ? 'bg-[#d4a15a] text-[#1a1733] border-[#d4a15a] font-bold shadow-sm' 
-                  : (isDarkHero 
-                      ? 'border-[#d4a15a]/40 text-[#f5d89f] hover:bg-[#d4a15a]/15 hover:border-[#d4a15a]' 
-                      : 'border-ivory-300 text-charcoal-700 hover:bg-ivory-100')
-              }`}
-            >
-              Admin
-            </button>
+            {/* Admin Toggle — ONLY visible to Admin / Super Admin */}
+            {(user?.role === 'admin' || user?.role === 'super_admin') && (
+              <button 
+                onClick={() => setIsAdminMode(!isAdminMode)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-300 ${
+                  isAdminMode 
+                    ? 'bg-[#d4a15a] text-[#1a1733] border-[#d4a15a] font-bold shadow-sm' 
+                    : (isDarkHero 
+                        ? 'border-[#d4a15a]/40 text-[#f5d89f] hover:bg-[#d4a15a]/15 hover:border-[#d4a15a]' 
+                        : 'border-ivory-300 text-charcoal-700 hover:bg-ivory-100')
+                }`}
+              >
+                Admin Panel
+              </button>
+            )}
 
             {/* User Profile or Login */}
             {user ? (
@@ -318,15 +320,17 @@ export default function Navbar({
             </div>
 
             <div className="p-4 border-t border-ivory-200 space-y-3 bg-ivory-100/50">
-              <div className="flex justify-between items-center px-4 py-2 bg-ivory-50 rounded-xl border border-ivory-200">
-                <span className="text-xs font-semibold text-charcoal-700">Admin Mode</span>
-                <button 
-                  onClick={() => setIsAdminMode(!isAdminMode)}
-                  className={`w-10 h-5 rounded-full transition-colors relative ${isAdminMode ? 'bg-copper-500' : 'bg-charcoal-300'}`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${isAdminMode ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
-              </div>
+              {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                <div className="flex justify-between items-center px-4 py-2 bg-ivory-50 rounded-xl border border-ivory-200">
+                  <span className="text-xs font-semibold text-charcoal-700">Admin Mode</span>
+                  <button 
+                    onClick={() => setIsAdminMode(!isAdminMode)}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${isAdminMode ? 'bg-copper-500' : 'bg-charcoal-300'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${isAdminMode ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              )}
 
               {user ? (
                 <>
