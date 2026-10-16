@@ -4,8 +4,7 @@
 -- Money is stored exclusively in INTEGER PAISE (1 INR = 100 paise)
 -- ============================================================================
 
--- Extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Extensions (None required - standard SERIAL and TIMESTAMP used)
 
 -- 1. USERS & DEVOTEES
 -- Compliance: users.consent_data_sharing defaults to false (explicit opt-in only)

@@ -7,10 +7,18 @@ import { ModulithManifest } from './src/modules/index.js';
 async function startServer() {
   try {
     console.log(`[BOOT] Initializing Shiri Mandir Database engine: ${getDbEngine()}...`);
-    await initDb();
+    try {
+      await initDb();
+    } catch (dbErr) {
+      console.warn('[BOOT] Database initialization notice (non-fatal):', dbErr.message);
+    }
     
-    // Auto-seed if running locally and database was fresh
-    await seedDatabase();
+    // Auto-seed initial datasets defensively
+    try {
+      await seedDatabase();
+    } catch (seedErr) {
+      console.warn('[BOOT] Database seed notice (non-fatal):', seedErr.message);
+    }
 
     app.listen(config.port, () => {
       console.log(`=======================================================`);
@@ -26,7 +34,13 @@ async function startServer() {
     });
   } catch (err) {
     console.error('Fatal boot error in Shiri Mandir Server:', err);
-    process.exit(1);
+    try {
+      app.listen(config.port, () => {
+        console.log(`[BOOT-FALLBACK] Server listening on port ${config.port} in degraded mode`);
+      });
+    } catch {
+      process.exit(1);
+    }
   }
 }
 

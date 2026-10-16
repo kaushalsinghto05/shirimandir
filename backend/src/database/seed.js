@@ -338,6 +338,18 @@ export async function seedDatabase() {
     ON CONFLICT (id) DO NOTHING;
   `);
 
+  // 11. Resync all primary key sequences in PostgreSQL
+  if (getDbEngine() === 'postgresql') {
+    try {
+      const tables = ['users', 'temples', 'pujas', 'puja_packages', 'prasad_items', 'bookings', 'orders', 'order_items', 'payments', 'refund_requests'];
+      for (const tbl of tables) {
+        await query(`SELECT setval(pg_get_serial_sequence('${tbl}', 'id'), COALESCE((SELECT MAX(id) FROM ${tbl}), 1), true);`).catch(() => {});
+      }
+    } catch (seqErr) {
+      console.warn('[SEED] Sequence sync notice:', seqErr.message);
+    }
+  }
+
   console.log('[SEED] Database successfully seeded with 3 compliant temples, pujas, packages, FSSAI prasad items, verified bookings, itemized orders, and sample refund request.');
 }
 

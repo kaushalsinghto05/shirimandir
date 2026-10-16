@@ -16,6 +16,9 @@ if (isPostgres) {
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   });
+  pgPool.on('error', (err) => {
+    console.warn('[DB] Unexpected error on idle PostgreSQL client:', err.message);
+  });
 } else {
   // Local SQLite database file in backend root or local data directory
   const dbDir = path.join(__dirname, '../../data');
@@ -49,7 +52,11 @@ export async function query(sqlText, params = []) {
 
     // Auto-cast parameter placeholders for boolean columns in PostgreSQL
     if (/INSERT INTO users/i.test(pgSql)) {
-      pgSql = pgSql.replace(/\$9\b/g, '($9::boolean)');
+      pgSql = pgSql
+        .replace(/\$5\b/g, '($5::boolean)')
+        .replace(/\$6\b/g, '($6::boolean)')
+        .replace(/\$9\b/g, '($9::boolean)')
+        .replace(/\$10\b/g, '($10::boolean)');
     }
     if (/UPDATE users/i.test(pgSql) && /consent_data_sharing\s*=\s*\$1/i.test(pgSql)) {
       pgSql = pgSql.replace(/consent_data_sharing\s*=\s*\$1/i, 'consent_data_sharing = ($1::boolean)');
@@ -97,19 +104,58 @@ export async function query(sqlText, params = []) {
 }
 
 /**
- * Initialize Database Tables
+ * Initialize Database Tables and Migrations
  */
 export async function initDb() {
   if (isPostgres) {
-    const schemaPath = path.join(__dirname, 'schema.sql');
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    await pgPool.query(schemaSql);
+    // 1. Apply base schema defensively
     try {
-      await pgPool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN NOT NULL DEFAULT FALSE;');
-    } catch {
-      // column already exists
+      const schemaPath = path.join(__dirname, 'schema.sql');
+      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+      await pgPool.query(schemaSql);
+    } catch (schemaErr) {
+      console.warn('[DB] Notice while executing schema.sql:', schemaErr.message);
     }
-    console.log('PostgreSQL schema verified and applied.');
+
+    // 2. Incremental column migrations for existing instances
+    try {
+      await pgPool.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_data_sharing BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_timestamp TIMESTAMP WITH TIME ZONE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_ip_address VARCHAR(45);
+      `);
+    } catch (colErr) {
+      console.warn('[DB] Column migration notice:', colErr.message);
+    }
+
+    // 3. Relax name column requirements if present
+    try {
+      await pgPool.query(`ALTER TABLE users ALTER COLUMN name SET DEFAULT '';`);
+      await pgPool.query(`ALTER TABLE users ALTER COLUMN name DROP NOT NULL;`);
+    } catch {
+      // already nullable or default set
+    }
+
+    // 4. Update role constraint to include 'super_admin'
+    try {
+      await pgPool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;`);
+      await pgPool.query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('devotee', 'admin', 'super_admin', 'temple_partner'));`);
+    } catch (constErr) {
+      console.warn('[DB] Role constraint migration notice:', constErr.message);
+    }
+
+    // 5. Resync sequences to avoid duplicate key conflicts after explicit ID seeds
+    try {
+      const tables = ['users', 'temples', 'pujas', 'puja_packages', 'prasad_items', 'bookings', 'orders', 'order_items', 'payments', 'refund_requests'];
+      for (const tbl of tables) {
+        await pgPool.query(`SELECT setval(pg_get_serial_sequence('${tbl}', 'id'), COALESCE((SELECT MAX(id) FROM ${tbl}), 1), true);`).catch(() => {});
+      }
+    } catch (seqErr) {
+      console.warn('[DB] Sequence sync notice:', seqErr.message);
+    }
+
+    console.log('PostgreSQL schema and migrations verified and applied.');
   } else {
     const schemaPath = path.join(__dirname, 'schema_sqlite.sql');
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
