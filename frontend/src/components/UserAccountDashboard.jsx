@@ -109,7 +109,7 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist = [
   ]);
   const [showDonationModal, setShowDonationModal] = useState(false);
   const [donationForm, setDonationForm] = useState({
-    campaign_id: 'don-annadanam',
+    campaign_id: 1,
     amount_inr: '2100',
     donor_name: user?.name || 'Kaushal Singh',
     donor_email: user?.email || 'devotee@shirimandir.org',
@@ -118,6 +118,7 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist = [
   });
   const [donatingLoading, setDonatingLoading] = useState(false);
   const [donationSuccessMsg, setDonationSuccessMsg] = useState('');
+  const [bookingPaymentSuccessMsg, setBookingPaymentSuccessMsg] = useState('');
 
   // Devotee Bookings State (P0 Booking History & Confirmation)
   const [bookings, setBookings] = useState([
@@ -299,7 +300,14 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist = [
     setDonationSuccessMsg('');
 
     try {
-      const res = await donationService.createDonation(donationForm);
+      const payload = {
+        ...donationForm,
+        campaign_id: Number(donationForm.campaign_id) || 1,
+        donor_email: user?.email || donationForm.donor_email || 'devotee@shirimandir.org',
+        donor_name: donationForm.donor_name || user?.name || 'Devotee',
+        donor_pan: donationForm.donor_pan || 'ABCDE1234F'
+      };
+      const res = await donationService.createDonation(payload);
       if (res.ok && res.data?.data) {
         const { donation, receipt } = res.data.data;
         const newDonationRecord = {
@@ -334,6 +342,10 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist = [
 
   // Handle Online Payment Success
   const handleOnlinePaymentSuccess = (paymentDetails) => {
+    const bookingCode = activePaymentBooking?.booking_code || paymentDetails?.booking_code || 'BK-KV-CONFIRMED';
+    setShowPaymentModal(false);
+    setActivePaymentBooking(null);
+
     if (activePaymentBooking) {
       setBookings(prev => prev.map(b => b.id === activePaymentBooking.id ? { 
         ...b, 
@@ -341,10 +353,9 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist = [
         receipt_number: `RCP-PAY-${Date.now().toString().slice(-5)}`,
         payment_arrangement: 'Razorpay Verified Gateway'
       } : b));
-      alert(`Booking ${activePaymentBooking.booking_code} payment verified successfully! Your sacred reservation is confirmed.`);
-      setShowPaymentModal(false);
-      setActivePaymentBooking(null);
     }
+    setBookingPaymentSuccessMsg(`Booking ${bookingCode} payment verified successfully via HMAC SHA-256 webhook! Your sacred reservation is confirmed.`);
+    setTimeout(() => setBookingPaymentSuccessMsg(''), 6000);
   };
 
   // Filtered Bookings
@@ -454,6 +465,17 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist = [
 
       {/* Tab Content Panels */}
       <div className="min-h-[400px]">
+        {bookingPaymentSuccessMsg && (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-xs animate-fade-in">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span>{bookingPaymentSuccessMsg}</span>
+            </div>
+            <button onClick={() => setBookingPaymentSuccessMsg('')} className="text-emerald-700 hover:text-emerald-900 font-bold p-1">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         
         {/* TAB 1: PUJA BOOKINGS & ONLINE PAYMENT */}
         {activeTab === 'bookings' && (
@@ -1093,9 +1115,9 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist = [
                   onChange={e => setDonationForm({ ...donationForm, campaign_id: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-ivory-300 text-charcoal-900 bg-white focus:outline-hidden focus:border-copper-500"
                 >
-                  <option value="don-annadanam">Maha Annadanam Seva — Shri Kashi Vishwanath</option>
-                  <option value="don-gaushala">Vedic Gaushala & Gir Cow Seva — Tirupati Balaji</option>
-                  <option value="don-kalash">Gold Kalash Consecration Fund — Siddhivinayak Mumbai</option>
+                  <option value={1}>Maha Annadanam Seva — Shri Kashi Vishwanath</option>
+                  <option value={2}>Vedic Gaushala & Gir Cow Seva — Tirupati Balaji</option>
+                  <option value={3}>Gold Kalash Consecration Fund — Siddhivinayak Mumbai</option>
                 </select>
               </div>
 

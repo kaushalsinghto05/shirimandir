@@ -223,20 +223,62 @@ export default function AdminDashboard({ onExitAdmin, templesData = [], onUpdate
     }
   ]);
   
-  // Sample pending bookings needing proof
+  // Booking Management & Proof of Service State (FR-BOOK, Rule 3)
+  const [bookingFilterStatus, setBookingFilterStatus] = useState('all');
+  const [bookingSearchQuery, setBookingSearchQuery] = useState('');
   const [pendingProofBookings, setPendingProofBookings] = useState([
+    {
+      id: 1,
+      booking_code: 'BK-KV-2026-9081',
+      temple_name: 'Shri Kashi Vishwanath Temple',
+      puja_title: 'Maha Rudrabhishek with Sacred Ganga Jal & Bilva Patra',
+      devotee_name: 'Kaushal Singh',
+      gotra: 'Kashyap',
+      scheduled_date: '2026-10-14',
+      total_amount_inr: 2400,
+      status: 'completed',
+      proof_media_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80',
+      proof_notes: 'Consecrated Vedic ritual performed in sanctum sanctorum with 11 dravyas.'
+    },
     {
       id: 2,
       booking_code: 'BK-TB-2026-4412',
       temple_name: 'Sri Venkateswara Swamy Temple (Tirupati Balaji)',
       puja_title: 'Kalyanotsavam & Suprabhata Archana Seva',
-      devotee_name: 'Kaushal Singh',
-      gotra: 'Kashyap',
+      devotee_name: 'Aarav Sharma',
+      gotra: 'Bharadwaja',
       scheduled_date: '2026-10-15',
+      total_amount_inr: 3150,
       status: 'confirmed',
+      proof_media_url: null
+    },
+    {
+      id: 3,
+      booking_code: 'BK-SV-2026-1102',
+      temple_name: 'Shree Siddhivinayak Temple, Mumbai',
+      puja_title: 'Sankashti Chaturthi Ganapati Sahasranama Archana',
+      devotee_name: 'Sunita Nambiar',
+      gotra: 'Vashistha',
+      scheduled_date: '2026-10-16',
+      total_amount_inr: 1500,
+      status: 'pending_payment',
       proof_media_url: null
     }
   ]);
+
+  // Consolidated Multi-Temple Reports State (FR-REP-005)
+  const [consolidatedReports, setConsolidatedReports] = useState({
+    temple_bookings: [
+      { temple_name: 'Shri Kashi Vishwanath Temple', slug: 'kashi-vishwanath', booking_count: 142, total_inr: 340800 },
+      { temple_name: 'Sri Venkateswara Swamy Temple (Tirupati Balaji)', slug: 'tirupati-balaji', booking_count: 89, total_inr: 213600 },
+      { temple_name: 'Shree Siddhivinayak Temple, Mumbai', slug: 'siddhivinayak-mumbai', booking_count: 56, total_inr: 134400 }
+    ],
+    temple_donations: [
+      { temple_name: 'Shri Kashi Vishwanath Temple', slug: 'kashi-vishwanath', donation_count: 342, total_inr: 382500 },
+      { temple_name: 'Sri Venkateswara Swamy Temple (Tirupati Balaji)', slug: 'tirupati-balaji', donation_count: 512, total_inr: 720000 },
+      { temple_name: 'Shree Siddhivinayak Temple, Mumbai', slug: 'siddhivinayak-mumbai', donation_count: 880, total_inr: 1950000 }
+    ]
+  });
 
   // Sample Prasad items awaiting FSSAI verification
   const [prasadQueue, setPrasadQueue] = useState([
@@ -355,11 +397,12 @@ export default function AdminDashboard({ onExitAdmin, templesData = [], onUpdate
     let isMounted = true;
     async function loadAdminData() {
       try {
-        const [mRes, rRes, aRes, recRes] = await Promise.all([
+        const [mRes, rRes, aRes, recRes, repRes] = await Promise.all([
           adminService.getMetrics(),
           adminService.getRefunds(),
           adminService.getAuditLogs(30),
-          adminService.getReconciliations()
+          adminService.getReconciliations(),
+          adminService.getReports()
         ]);
         if (!isMounted) return;
         if (mRes.ok && mRes.data?.data) {
@@ -379,6 +422,9 @@ export default function AdminDashboard({ onExitAdmin, templesData = [], onUpdate
         }
         if (recRes.ok && Array.isArray(recRes.data?.data) && recRes.data.data.length > 0) {
           setReconciliationExceptions(recRes.data.data);
+        }
+        if (repRes.ok && repRes.data?.data) {
+          setConsolidatedReports(repRes.data.data);
         }
       } catch (err) {
         console.warn('Admin live sync notice:', err);
@@ -537,6 +583,41 @@ export default function AdminDashboard({ onExitAdmin, templesData = [], onUpdate
     document.body.removeChild(link);
   };
 
+  // Export Bookings CSV (FR-REP-001)
+  const handleExportBookingsCSV = () => {
+    const headers = "Booking Code,Puja Title,Temple,Devotee Name,Gotra,Scheduled Date,Amount (INR),Status,Proof URL\n";
+    const rows = pendingProofBookings.map(b => 
+      `"${b.booking_code}","${b.puja_title}","${b.temple_name}","${b.devotee_name}","${b.gotra || ''}","${b.scheduled_date}",${b.total_amount_inr || 2400},"${b.status}","${b.proof_media_url || ''}"`
+    ).join("\n");
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `shirimandir_bookings_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export Consolidated Multi-Temple Trust Report CSV (FR-REP-005)
+  const handleExportConsolidatedReportCSV = () => {
+    let csv = "Category,Temple Name,Count,Total Consecrated Volume (INR)\n";
+    (consolidatedReports.temple_bookings || []).forEach(b => {
+      csv += `"Puja Bookings","${b.temple_name}",${b.booking_count},${b.total_inr}\n`;
+    });
+    (consolidatedReports.temple_donations || []).forEach(d => {
+      csv += `"Sacred Donations","${d.temple_name}",${d.donation_count},${d.total_inr}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `shirimandir_consolidated_trust_report_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // 7. Donation Campaign Handlers (FR-DON-001..007)
   const handleCreateCampaign = (e) => {
     e.preventDefault();
@@ -655,10 +736,10 @@ export default function AdminDashboard({ onExitAdmin, templesData = [], onUpdate
           {[
             { id: 'temples', label: '1. Temple Affiliation & Wait Times' },
             { id: 'prasad', label: '2. Prasad FSSAI Approvals' },
-            { id: 'proofs', label: '3. Puja Proof-of-Service Upload' },
+            { id: 'proofs', label: '3. Puja Bookings Management & Proofs' },
             { id: 'refunds', label: '4. Refund Request Review Queue' },
             { id: 'catalog', label: '5. Puja Catalog & Capacity Slots' },
-            { id: 'ledger', label: '6. 80G Receipts & Audit Ledger' },
+            { id: 'ledger', label: '6. 80G Receipts & Consolidated Trust Reports' },
             { id: 'campaigns', label: '7. Donation & Annadanam Funds' },
             { id: 'priests', label: '8. Priest Roster & Sankalp Sheet' },
             { id: 'inventory', label: '9. Prasad Stock Controller' },
@@ -826,40 +907,100 @@ export default function AdminDashboard({ onExitAdmin, templesData = [], onUpdate
           </div>
         )}
 
-        {/* SECTION 3: PUJA PROOF-OF-SERVICE UPLOAD */}
+        {/* SECTION 3: PUJA BOOKINGS MANAGEMENT & PROOF-OF-SERVICE (FR-BOOK, Rule 3) */}
         {activeTab === 'proofs' && (
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-ivory-200 space-y-6">
-            <div>
-              <h2 className="font-display text-xl font-bold text-charcoal-900">
-                Consecrated Seva Proof-of-Service Portal
-              </h2>
-              <p className="text-xs text-charcoal-500 mt-0.5">
-                Rule: bookings.proof_media_url — puja can ONLY be marked "completed" if photo/video proof is attached for the devotee.
-              </p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-ivory-200">
+              <div>
+                <h2 className="font-display text-xl font-bold text-charcoal-900 flex items-center gap-2">
+                  <ScrollText className="w-5 h-5 text-copper-600" />
+                  <span>Puja Bookings Management & Service Proofs</span>
+                </h2>
+                <p className="text-xs text-charcoal-500 mt-0.5">
+                  Rule 3 & FR-BOOK-001..006: Manage all devotee reservations, monitor payment fulfillment, and attach sanctum proof-of-service media.
+                </p>
+              </div>
+
+              <button
+                onClick={handleExportBookingsCSV}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 text-white text-xs font-bold shadow-xs transition-colors"
+              >
+                <Download className="w-4 h-4 text-temple-gold-400" />
+                <span>Export Bookings (.CSV)</span>
+              </button>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 bg-ivory-50 p-3.5 rounded-2xl border border-ivory-200 text-xs">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="Filter by booking code, devotee or puja..."
+                  value={bookingSearchQuery}
+                  onChange={(e) => setBookingSearchQuery(e.target.value)}
+                  className="px-3.5 py-2 rounded-xl bg-white border border-ivory-300 text-charcoal-900 w-full sm:w-72 focus:outline-none focus:border-copper-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                {[
+                  { id: 'all', label: 'All Bookings' },
+                  { id: 'confirmed', label: 'Confirmed' },
+                  { id: 'completed', label: 'Completed (Proof Verified)' },
+                  { id: 'pending_payment', label: 'Pending Payment' }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setBookingFilterStatus(f.id)}
+                    className={`px-3 py-1.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${
+                      bookingFilterStatus === f.id
+                        ? 'bg-charcoal-900 text-white shadow-xs'
+                        : 'bg-white border border-ivory-300 text-charcoal-700 hover:bg-ivory-100'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-4">
-              {pendingProofBookings.map(b => (
+              {pendingProofBookings
+                .filter(b => {
+                  const matchesSearch = 
+                    b.booking_code.toLowerCase().includes(bookingSearchQuery.toLowerCase()) ||
+                    b.devotee_name.toLowerCase().includes(bookingSearchQuery.toLowerCase()) ||
+                    b.puja_title.toLowerCase().includes(bookingSearchQuery.toLowerCase());
+                  if (bookingFilterStatus === 'all') return matchesSearch;
+                  return matchesSearch && b.status === bookingFilterStatus;
+                })
+                .map(b => (
                 <div key={b.id} className="p-5 rounded-2xl bg-ivory-50 border border-ivory-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs">
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold text-charcoal-900">#{b.booking_code}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        b.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        b.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 
+                        b.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                        'bg-amber-100 text-amber-800 animate-pulse'
                       }`}>
-                        {b.status}
+                        {b.status.replace('_', ' ')}
+                      </span>
+                      <span className="text-copper-700 font-mono font-bold">
+                        ₹{b.total_amount_inr || 2400}
                       </span>
                     </div>
 
                     <h4 className="font-bold text-sm text-charcoal-900">{b.puja_title}</h4>
                     <p className="text-charcoal-500">{b.temple_name}</p>
                     <p className="text-charcoal-600">
-                      Devotee: <strong>{b.devotee_name}</strong> (Gotra: {b.gotra}) • Scheduled: {b.scheduled_date}
+                      Devotee: <strong>{b.devotee_name}</strong> (Gotra: {b.gotra}) • Scheduled: <strong>{b.scheduled_date}</strong>
                     </p>
 
                     {b.proof_media_url && (
-                      <p className="text-emerald-700 font-mono text-[11px] pt-1">
-                        Proof attached: {b.proof_media_url}
+                      <p className="text-emerald-700 font-mono text-[11px] pt-1 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Proof attached: {b.proof_media_url}</span>
                       </p>
                     )}
                   </div>
@@ -868,13 +1009,13 @@ export default function AdminDashboard({ onExitAdmin, templesData = [], onUpdate
                     {b.status !== 'completed' ? (
                       <button
                         onClick={() => setSelectedProofBooking(b)}
-                        className="px-4 py-2.5 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                        className="px-4 py-2.5 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm transition-colors whitespace-nowrap"
                       >
                         <Upload className="w-3.5 h-3.5 text-temple-gold-400" />
                         Attach Proof & Complete Puja
                       </button>
                     ) : (
-                      <span className="text-emerald-700 font-semibold flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                      <span className="text-emerald-700 font-semibold flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 whitespace-nowrap">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Completed with Verified Proof
                       </span>
                     )}
@@ -1184,6 +1325,62 @@ export default function AdminDashboard({ onExitAdmin, templesData = [], onUpdate
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Consolidated Multi-Temple Financial & Revenue Report (FR-REP-005) */}
+            <div className="pt-6 border-t border-ivory-200 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h3 className="font-display text-base font-bold text-charcoal-900 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-copper-600" />
+                    <span>Consolidated Multi-Temple Trust Revenue Report (FR-REP-005)</span>
+                  </h3>
+                  <p className="text-xs text-charcoal-500 mt-0.5">
+                    Trust-level consolidated audit roll-up across all temples. Complete separation of platform fees from sacred offerings.
+                  </p>
+                </div>
+                <button
+                  onClick={handleExportConsolidatedReportCSV}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-copper-600 hover:bg-copper-700 text-white text-xs font-bold shadow-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5 text-temple-gold-300" />
+                  <span>Export Consolidated Trust Report (.CSV)</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Bookings Rollup */}
+                <div className="p-4 rounded-2xl bg-ivory-50 border border-ivory-200">
+                  <h4 className="text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-2">Puja Seva Bookings by Temple</h4>
+                  <div className="divide-y divide-ivory-200 text-xs">
+                    {(consolidatedReports.temple_bookings || []).map((b, idx) => (
+                      <div key={idx} className="py-2.5 flex justify-between items-center">
+                        <div>
+                          <p className="font-semibold text-charcoal-900">{b.temple_name}</p>
+                          <p className="text-[11px] text-charcoal-500">{b.booking_count} Seva Bookings</p>
+                        </div>
+                        <span className="font-mono font-bold text-copper-700">₹{Number(b.total_inr || 0).toLocaleString('en-IN')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Donations Rollup */}
+                <div className="p-4 rounded-2xl bg-ivory-50 border border-ivory-200">
+                  <h4 className="text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-2">Sacred Donations & 80G by Temple</h4>
+                  <div className="divide-y divide-ivory-200 text-xs">
+                    {(consolidatedReports.temple_donations || []).map((d, idx) => (
+                      <div key={idx} className="py-2.5 flex justify-between items-center">
+                        <div>
+                          <p className="font-semibold text-charcoal-900">{d.temple_name}</p>
+                          <p className="text-[11px] text-charcoal-500">{d.donation_count} Devotee Offerings</p>
+                        </div>
+                        <span className="font-mono font-bold text-emerald-700">₹{Number(d.total_inr || 0).toLocaleString('en-IN')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

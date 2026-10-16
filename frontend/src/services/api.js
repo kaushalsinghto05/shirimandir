@@ -258,6 +258,7 @@ export const orderService = {
 export const paymentService = {
   createIntent: (payload) => apiRequest('/payments/intent', { method: 'POST', body: payload }),
   verifyPayment: (payload) => apiRequest('/payments/verify', { method: 'POST', body: payload }),
+  simulateWebhook: (paymentCode) => apiRequest('/payments/simulate-webhook', { method: 'POST', body: { payment_code: paymentCode } }),
   getMyPayments: () => apiRequest('/payments/my')
 };
 

@@ -467,11 +467,14 @@ export default function SuperAdminDashboard({ currentUser, onLogout }) {
       };
 
       if (exportConfig.format === 'json') {
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(dataPayload, null, 2));
+        const blob = new Blob([JSON.stringify(dataPayload, null, 2)], { type: 'application/json;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
         const dl = document.createElement('a');
-        dl.setAttribute('href', dataStr);
+        dl.setAttribute('href', url);
         dl.setAttribute('download', `shirimandir_${exportConfig.dataset}_export_${Date.now()}.json`);
+        document.body.appendChild(dl);
         dl.click();
+        document.body.removeChild(dl);
       } else {
         // Convert array of objects to CSV
         const items = dataPayload.records || [];
@@ -482,11 +485,14 @@ export default function SuperAdminDashboard({ currentUser, onLogout }) {
           ...items.map(row => header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','))
         ].join('\r\n');
         
-        const dataStr = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
         const dl = document.createElement('a');
-        dl.setAttribute('href', dataStr);
+        dl.setAttribute('href', url);
         dl.setAttribute('download', `shirimandir_${exportConfig.dataset}_export_${Date.now()}.csv`);
+        document.body.appendChild(dl);
         dl.click();
+        document.body.removeChild(dl);
       }
 
       setSuccessMsg(`Authorized ${exportConfig.dataset} dataset exported successfully with tenant isolation enforced.`);
