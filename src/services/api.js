@@ -268,9 +268,22 @@ export const refundService = {
   getMyRefunds: () => apiRequest('/refunds/my')
 };
 
+// ── Donation & Receipt Services ──
+export const donationService = {
+  getCampaigns: (params = '') => apiRequest(`/donations/campaigns${params}`),
+  createCampaign: (data) => apiRequest('/donations/campaigns', { method: 'POST', body: data }),
+  createDonation: (data) => apiRequest('/donations', { method: 'POST', body: data }),
+  getMyDonations: () => apiRequest('/donations/my'),
+  getReceipt: (receiptNumber) => apiRequest(`/donations/receipts/${receiptNumber}`)
+};
+
 // ── Admin Services ──
 export const adminService = {
   getMetrics: () => apiRequest('/admin/metrics'),
   getRefunds: () => apiRequest('/admin/refunds'),
-  reviewRefund: (id, status, admin_notes) => apiRequest(`/admin/refunds/${id}/review`, { method: 'PUT', body: { status, admin_notes } })
+  reviewRefund: (id, status, admin_notes) => apiRequest(`/admin/refunds/${id}/review`, { method: 'PUT', body: { status, admin_notes } }),
+  getAuditLogs: (limit = 50) => apiRequest(`/admin/audit-logs?limit=${limit}`),
+  getReconciliations: () => apiRequest('/admin/reconciliations'),
+  getReports: () => apiRequest('/admin/reports')
 };
+

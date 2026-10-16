@@ -282,3 +282,83 @@ CREATE TABLE IF NOT EXISTS refund_requests (
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );
+
+-- 11. DONATION CAMPAIGNS (FR-DON-001, FR-DON-008)
+CREATE TABLE IF NOT EXISTS donation_campaigns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    temple_id INTEGER NOT NULL REFERENCES temples(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    legal_entity_name TEXT NOT NULL,
+    target_amount_paise INTEGER NOT NULL DEFAULT 50000000 CHECK (target_amount_paise > 0),
+    collected_amount_paise INTEGER NOT NULL DEFAULT 0 CHECK (collected_amount_paise >= 0),
+    donors_count INTEGER NOT NULL DEFAULT 0 CHECK (donors_count >= 0),
+    tax_exempt_eligible INTEGER NOT NULL DEFAULT 1 CHECK (tax_exempt_eligible IN (0, 1)),
+    tax_exemption_ref TEXT DEFAULT 'SEC-80G-CERT-2024',
+    is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 12. DONATIONS (FR-DON-001..007, AT-10)
+CREATE TABLE IF NOT EXISTS donations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    donation_code TEXT UNIQUE NOT NULL,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    temple_id INTEGER NOT NULL REFERENCES temples(id) ON DELETE RESTRICT,
+    campaign_id INTEGER REFERENCES donation_campaigns(id) ON DELETE SET NULL,
+    amount_paise INTEGER NOT NULL CHECK (amount_paise > 0),
+    currency TEXT NOT NULL DEFAULT 'INR',
+    donor_name TEXT NOT NULL,
+    donor_email TEXT NOT NULL,
+    donor_phone TEXT,
+    donor_pan TEXT,
+    status TEXT NOT NULL DEFAULT 'completed' 
+        CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 13. RECEIPTS (FR-REC-001..006, AT-10, AT-12)
+CREATE TABLE IF NOT EXISTS receipts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    receipt_number TEXT UNIQUE NOT NULL,
+    donation_id INTEGER REFERENCES donations(id) ON DELETE CASCADE,
+    booking_id INTEGER REFERENCES bookings(id) ON DELETE CASCADE,
+    temple_id INTEGER REFERENCES temples(id) ON DELETE SET NULL,
+    issuing_legal_entity TEXT NOT NULL,
+    tax_exemption_ref TEXT DEFAULT '80G(5)(vi) of Income Tax Act 1961',
+    amount_paise INTEGER NOT NULL CHECK (amount_paise > 0),
+    currency TEXT NOT NULL DEFAULT 'INR',
+    status TEXT NOT NULL DEFAULT 'issued' 
+        CHECK (status IN ('issued', 'voided', 'corrected')),
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 14. AUDIT LOGS (FR-AUD-001..006, AT-12)
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    actor_email TEXT,
+    actor_role TEXT NOT NULL,
+    action TEXT NOT NULL,
+    resource_type TEXT NOT NULL,
+    resource_id TEXT NOT NULL,
+    ip_address TEXT,
+    details TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 15. RECONCILIATION EXCEPTIONS (AT-05, AT-06, FR-PAY-007)
+CREATE TABLE IF NOT EXISTS reconciliation_exceptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    payment_id INTEGER REFERENCES payments(id) ON DELETE SET NULL,
+    provider TEXT NOT NULL DEFAULT 'razorpay',
+    provider_event_id TEXT,
+    expected_amount_paise INTEGER NOT NULL,
+    received_amount_paise INTEGER NOT NULL,
+    exception_type TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'quarantined' 
+        CHECK (status IN ('quarantined', 'investigating', 'resolved')),
+    resolution_notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);

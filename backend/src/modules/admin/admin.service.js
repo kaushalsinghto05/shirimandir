@@ -141,6 +141,72 @@ export class AdminService {
       processed_at: now
     };
   }
+
+  /**
+   * Audit Trail (FR-AUD-001..006, AT-12)
+   */
+  async getAuditLogs(limit = 50) {
+    const { rows } = await query(
+      `SELECT a.*, u.name AS actor_name
+       FROM audit_logs a
+       LEFT JOIN users u ON a.actor_user_id = u.id
+       ORDER BY a.id DESC
+       LIMIT $1`,
+      [limit]
+    );
+    return rows;
+  }
+
+  /**
+   * Platform Operations & Payment Exceptions (AT-05, AT-06, FR-PAY-007)
+   */
+  async getReconciliationExceptions() {
+    const { rows } = await query(
+      `SELECT r.*, p.payment_code
+       FROM reconciliation_exceptions r
+       LEFT JOIN payments p ON r.payment_id = p.id
+       ORDER BY r.id DESC`
+    );
+    return rows.map(r => ({
+      ...r,
+      expected_amount_inr: r.expected_amount_paise / 100,
+      received_amount_inr: r.received_amount_paise / 100
+    }));
+  }
+
+  /**
+   * Consolidated Trust & Platform Financial Reports (FR-REP-001..006)
+   */
+  async getConsolidatedReports() {
+    const bookingsByTemple = await query(`
+      SELECT t.name AS temple_name, t.slug,
+             COUNT(b.id) AS booking_count,
+             COALESCE(SUM(b.total_amount_paise), 0) AS total_paise
+      FROM temples t
+      LEFT JOIN bookings b ON t.id = b.temple_id
+      GROUP BY t.id, t.name, t.slug
+    `);
+
+    const donationsByTemple = await query(`
+      SELECT t.name AS temple_name, t.slug,
+             COUNT(d.id) AS donation_count,
+             COALESCE(SUM(d.amount_paise), 0) AS total_paise
+      FROM temples t
+      LEFT JOIN donations d ON t.id = d.temple_id
+      GROUP BY t.id, t.name, t.slug
+    `);
+
+    return {
+      temple_bookings: bookingsByTemple.rows.map(r => ({
+        ...r,
+        total_inr: Number(r.total_paise) / 100
+      })),
+      temple_donations: donationsByTemple.rows.map(r => ({
+        ...r,
+        total_inr: Number(r.total_paise) / 100
+      }))
+    };
+  }
 }
 
 export const adminService = new AdminService();

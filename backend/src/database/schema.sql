@@ -306,6 +306,86 @@ CREATE TABLE IF NOT EXISTS refund_requests (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 11. DONATION CAMPAIGNS (FR-DON-001, FR-DON-008)
+CREATE TABLE IF NOT EXISTS donation_campaigns (
+    id SERIAL PRIMARY KEY,
+    temple_id INTEGER NOT NULL REFERENCES temples(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    legal_entity_name VARCHAR(255) NOT NULL,
+    target_amount_paise BIGINT NOT NULL DEFAULT 50000000 CHECK (target_amount_paise > 0),
+    collected_amount_paise BIGINT NOT NULL DEFAULT 0 CHECK (collected_amount_paise >= 0),
+    donors_count INTEGER NOT NULL DEFAULT 0 CHECK (donors_count >= 0),
+    tax_exempt_eligible BOOLEAN NOT NULL DEFAULT TRUE,
+    tax_exemption_ref VARCHAR(100) DEFAULT 'SEC-80G-CERT-2024',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. DONATIONS (FR-DON-001..007, AT-10)
+CREATE TABLE IF NOT EXISTS donations (
+    id SERIAL PRIMARY KEY,
+    donation_code VARCHAR(32) UNIQUE NOT NULL,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    temple_id INTEGER NOT NULL REFERENCES temples(id) ON DELETE RESTRICT,
+    campaign_id INTEGER REFERENCES donation_campaigns(id) ON DELETE SET NULL,
+    amount_paise INTEGER NOT NULL CHECK (amount_paise > 0),
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+    donor_name VARCHAR(150) NOT NULL,
+    donor_email VARCHAR(255) NOT NULL,
+    donor_phone VARCHAR(20),
+    donor_pan VARCHAR(15),
+    status VARCHAR(30) NOT NULL DEFAULT 'completed' 
+        CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 13. RECEIPTS (FR-REC-001..006, AT-10, AT-12)
+CREATE TABLE IF NOT EXISTS receipts (
+    id SERIAL PRIMARY KEY,
+    receipt_number VARCHAR(64) UNIQUE NOT NULL,
+    donation_id INTEGER REFERENCES donations(id) ON DELETE CASCADE,
+    booking_id INTEGER REFERENCES bookings(id) ON DELETE CASCADE,
+    temple_id INTEGER REFERENCES temples(id) ON DELETE SET NULL,
+    issuing_legal_entity VARCHAR(255) NOT NULL,
+    tax_exemption_ref VARCHAR(100) DEFAULT '80G(5)(vi) of Income Tax Act 1961',
+    amount_paise INTEGER NOT NULL CHECK (amount_paise > 0),
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+    status VARCHAR(30) NOT NULL DEFAULT 'issued' 
+        CHECK (status IN ('issued', 'voided', 'corrected')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. AUDIT LOGS (FR-AUD-001..006, AT-12)
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id SERIAL PRIMARY KEY,
+    actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    actor_email VARCHAR(255),
+    actor_role VARCHAR(64) NOT NULL,
+    action VARCHAR(128) NOT NULL,
+    resource_type VARCHAR(64) NOT NULL,
+    resource_id VARCHAR(128) NOT NULL,
+    ip_address VARCHAR(45),
+    details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. RECONCILIATION EXCEPTIONS (AT-05, AT-06, FR-PAY-007)
+CREATE TABLE IF NOT EXISTS reconciliation_exceptions (
+    id SERIAL PRIMARY KEY,
+    payment_id INTEGER REFERENCES payments(id) ON DELETE SET NULL,
+    provider VARCHAR(64) NOT NULL DEFAULT 'razorpay',
+    provider_event_id VARCHAR(128),
+    expected_amount_paise INTEGER NOT NULL,
+    received_amount_paise INTEGER NOT NULL,
+    exception_type VARCHAR(64) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'quarantined' 
+        CHECK (status IN ('quarantined', 'investigating', 'resolved')),
+    resolution_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- INDEXES FOR FAST AUDIT & QUERY PERFORMANCE
 CREATE INDEX IF NOT EXISTS idx_temples_verification ON temples(verification_status);
 CREATE INDEX IF NOT EXISTS idx_prasad_fssai ON prasad_items(fssai_license_no);
@@ -314,3 +394,8 @@ CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_payments_verified ON payments(verified_server_side);
 CREATE INDEX IF NOT EXISTS idx_refunds_status ON refund_requests(status);
+CREATE INDEX IF NOT EXISTS idx_donations_user ON donations(user_id);
+CREATE INDEX IF NOT EXISTS idx_donations_temple ON donations(temple_id);
+CREATE INDEX IF NOT EXISTS idx_receipts_number ON receipts(receipt_number);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_reconciliations_status ON reconciliation_exceptions(status);

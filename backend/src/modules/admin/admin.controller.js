@@ -46,3 +46,32 @@ export async function processRefundReview(req, res, next) {
     next(err);
   }
 }
+
+export async function getAuditLogs(req, res, next) {
+  try {
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    const logs = await adminService.getAuditLogs(limit);
+    return res.json({ success: true, data: logs });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getReconciliationExceptions(req, res, next) {
+  try {
+    const exceptions = await adminService.getReconciliationExceptions();
+    return res.json({ success: true, data: exceptions });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getConsolidatedReports(req, res, next) {
+  try {
+    const reports = await adminService.getConsolidatedReports();
+    return res.json({ success: true, data: reports });
+  } catch (err) {
+    next(err);
+  }
+}
+

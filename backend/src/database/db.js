@@ -147,7 +147,11 @@ export async function initDb() {
 
     // 5. Resync sequences to avoid duplicate key conflicts after explicit ID seeds
     try {
-      const tables = ['users', 'temples', 'pujas', 'puja_packages', 'prasad_items', 'bookings', 'orders', 'order_items', 'payments', 'refund_requests'];
+      const tables = [
+        'users', 'temples', 'pujas', 'puja_packages', 'prasad_items',
+        'bookings', 'orders', 'order_items', 'payments', 'refund_requests',
+        'donation_campaigns', 'donations', 'receipts', 'audit_logs', 'reconciliation_exceptions'
+      ];
       for (const tbl of tables) {
         await pgPool.query(`SELECT setval(pg_get_serial_sequence('${tbl}', 'id'), COALESCE((SELECT MAX(id) FROM ${tbl}), 1), true);`).catch(() => {});
       }

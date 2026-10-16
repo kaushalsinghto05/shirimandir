@@ -7,6 +7,7 @@ import { orderRoutes, orderService, registerOrderEventSubscribers } from './orde
 import { paymentRoutes, paymentService } from './payment/index.js';
 import { refundRoutes, refundService } from './refund/index.js';
 import { adminRoutes, adminService } from './admin/index.js';
+import { donationRoutes, donationService } from './donation/index.js';
 
 /**
  * Manifest of all domain chunks in the Shiri Mandir Modular Monolith (Modulith)
@@ -20,6 +21,7 @@ export const ModulithManifest = [
   { name: 'order', mountPath: '/api/orders', description: 'Prasad Orders, Zero Hidden Fees, and Inventory Deduction' },
   { name: 'payment', mountPath: '/api/payments', description: 'Payment Sessions and Cryptographic HMAC SHA-256 Webhooks' },
   { name: 'refund', mountPath: '/api/refunds', description: 'Transparent Cancellation Policies and Automated Refund Math' },
+  { name: 'donation', mountPath: '/api/donations', description: 'Sacred Donation Campaigns, Devotee Tax PAN, and Sequential 80G Receipts' },
   { name: 'admin', mountPath: '/api/admin', description: 'Platform Governance, Compliance Metrics, and Refund Audits' }
 ];
 
@@ -43,6 +45,7 @@ export function registerModules(app) {
   app.use('/api/orders', orderRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/refunds', refundRoutes);
+  app.use('/api/donations', donationRoutes);
   app.use('/api/admin', adminRoutes);
 
   console.log(`[MODULITH] Successfully mounted ${ModulithManifest.length} cohesive domain modules.`);
@@ -57,5 +60,7 @@ export {
   orderService,
   paymentService,
   refundService,
+  donationService,
   adminService
 };
+

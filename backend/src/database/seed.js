@@ -338,10 +338,125 @@ export async function seedDatabase() {
     ON CONFLICT (id) DO NOTHING;
   `);
 
-  // 11. Resync all primary key sequences in PostgreSQL
+  // 11. Seed Donation Campaigns (FR-DON-001, FR-DON-008)
+  await query(`
+    INSERT INTO donation_campaigns (
+      id, temple_id, title, description, legal_entity_name,
+      target_amount_paise, collected_amount_paise, donors_count, tax_exempt_eligible, tax_exemption_ref, is_active
+    )
+    VALUES
+    (
+      1, 1,
+      'Maha Annadanam Seva (Daily Free Sacred Meals for 10,000 Devotees)',
+      'Providing daily hot, nutritious satvik meals and prasad to pilgrims, sadhus, and underprivileged families along Varanasi ghats.',
+      'Shri Kashi Vishwanath Temple Trust (80G Exempt)',
+      50000000, 38250000, 342, TRUE, 'SEC-80G-KV-2024-991', TRUE
+    ),
+    (
+      2, 2,
+      'Vedic Gaushala & Indigenous Gir Cow Protection Seva',
+      'Shelter, organic fodder, veterinary care, and loving protection for over 1,200 rescued indigenous cows and calves at Tirumala foothills.',
+      'Tirumala Tirupati Devasthanams (TTD)',
+      100000000, 72000000, 512, TRUE, 'SEC-80G-TTD-2023-410', TRUE
+    ),
+    (
+      3, 3,
+      'Temple Gopuram Gold Kalash Consecration & Renovation Fund',
+      'Historical sanctum preservation, artisanal stonework restoration, and consecration of the 24K gold kalash atop the sanctum sanctorum.',
+      'Shree Siddhivinayak Ganapati Temple Trust',
+      250000000, 195000000, 880, TRUE, 'SEC-80G-SVT-2022-819', TRUE
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 12. Seed Devotee Donations (FR-DON-001..007, AT-10)
+  await query(`
+    INSERT INTO donations (
+      id, donation_code, user_id, temple_id, campaign_id,
+      amount_paise, currency, donor_name, donor_email, donor_phone, donor_pan, status
+    )
+    VALUES
+    (
+      1, 'DON-KV-2026-0104', 1, 1, 1,
+      510000, 'INR', 'Kaushal Singh', 'kaushal@example.com', '+919876543210', 'ABCDE1234F', 'completed'
+    ),
+    (
+      2, 'DON-TB-2026-0219', 2, 2, 2,
+      1100000, 'INR', 'Aarav Sharma', 'aarav@example.com', '+919811122233', 'XYZPK9876L', 'completed'
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 13. Seed Verified 80G Receipts (FR-REC-001..006, AT-10)
+  await query(`
+    INSERT INTO receipts (
+      id, receipt_number, donation_id, booking_id, temple_id,
+      issuing_legal_entity, tax_exemption_ref, amount_paise, currency, status
+    )
+    VALUES
+    (
+      1, 'RCP-KASHI-2026-000104', 1, NULL, 1,
+      'Shri Kashi Vishwanath Temple Trust (80G Exempt)',
+      '80G(5)(vi) of Income Tax Act 1961 - AABTK1029NF20214',
+      510000, 'INR', 'issued'
+    ),
+    (
+      2, 'RCP-TIRUPATI-2026-000219', 2, NULL, 2,
+      'Tirumala Tirupati Devasthanams (TTD)',
+      '80G(5)(vi) of Income Tax Act 1961 - AAATT4091PF20202',
+      1100000, 'INR', 'issued'
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 14. Seed Audit Logs (FR-AUD-001..006, AT-12)
+  await query(`
+    INSERT INTO audit_logs (
+      id, actor_user_id, actor_email, actor_role, action, resource_type, resource_id, ip_address, details
+    )
+    VALUES
+    (
+      1, 4, 'admin@shirimandir.org', 'admin', 'temple.affiliation_verified',
+      'temple', '1', '127.0.0.1', 'Approved official trust MoU for Shri Kashi Vishwanath'
+    ),
+    (
+      2, 4, 'admin@shirimandir.org', 'admin', 'prasad.fssai_verified',
+      'prasad_item', '1', '127.0.0.1', 'Verified 14-digit FSSAI license 12723999000142 for Kashi Peda'
+    ),
+    (
+      3, 5, 'superadmin@shirimandir.org', 'super_admin', 'user.role_promoted',
+      'user', '4', '127.0.0.1', 'Role confirmed as platform compliance administrator'
+    ),
+    (
+      4, 3, 'priest.kashi@shirimandir.org', 'temple_partner', 'booking.proof_uploaded',
+      'booking', '1', '127.0.0.1', 'Uploaded sanctum bilva archana photo proof for BK-KV-2026-9081'
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 15. Seed Reconciliation Exceptions (AT-05, AT-06)
+  await query(`
+    INSERT INTO reconciliation_exceptions (
+      id, payment_id, provider, provider_event_id,
+      expected_amount_paise, received_amount_paise, exception_type, status, resolution_notes
+    )
+    VALUES
+    (
+      1, NULL, 'razorpay', 'evt_rzp_mock_mismatch_001',
+      240000, 200000, 'amount_mismatch', 'quarantined',
+      'Webhook payload specified ₹2000 instead of expected ₹2400. Isolated in quarantine automatically per AT-05.'
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 16. Resync all primary key sequences in PostgreSQL
   if (getDbEngine() === 'postgresql') {
     try {
-      const tables = ['users', 'temples', 'pujas', 'puja_packages', 'prasad_items', 'bookings', 'orders', 'order_items', 'payments', 'refund_requests'];
+      const tables = [
+        'users', 'temples', 'pujas', 'puja_packages', 'prasad_items',
+        'bookings', 'orders', 'order_items', 'payments', 'refund_requests',
+        'donation_campaigns', 'donations', 'receipts', 'audit_logs', 'reconciliation_exceptions'
+      ];
       for (const tbl of tables) {
         await query(`SELECT setval(pg_get_serial_sequence('${tbl}', 'id'), COALESCE((SELECT MAX(id) FROM ${tbl}), 1), true);`).catch(() => {});
       }
@@ -350,7 +465,7 @@ export async function seedDatabase() {
     }
   }
 
-  console.log('[SEED] Database successfully seeded with 3 compliant temples, pujas, packages, FSSAI prasad items, verified bookings, itemized orders, and sample refund request.');
+  console.log('[SEED] Database successfully seeded with 3 compliant temples, pujas, packages, FSSAI prasad items, verified bookings, itemized orders, donation campaigns, verified 80G receipts, audit logs, and reconciliation exceptions.');
 }
 
 // Direct execution when run via `node src/database/seed.js`

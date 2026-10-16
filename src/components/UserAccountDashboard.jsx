@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, Phone, MapPin, Video, FileText, CheckCircle2, Clock, 
-  RotateCcw, ShieldCheck, Lock, Check, Package, AlertCircle, ExternalLink 
+  RotateCcw, ShieldCheck, Lock, Check, Package, AlertCircle, ExternalLink, Heart, Sparkles, Plus, Download
 } from 'lucide-react';
 import ProofMediaViewerModal from './ProofMediaViewerModal';
 import RefundRequestModal from './RefundRequestModal';
-import { authService, bookingService, orderService, refundService } from '../services/api';
+import { authService, bookingService, orderService, refundService, donationService } from '../services/api';
 
 export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, temples, onSelectTemple }) {
-  const [activeTab, setActiveTab] = useState('bookings'); // 'bookings', 'orders', 'refunds', 'privacy'
+  const [activeTab, setActiveTab] = useState('bookings'); // 'bookings', 'donations', 'orders', 'refunds', 'privacy'
   const [selectedProofBooking, setSelectedProofBooking] = useState(null);
   const [selectedRefundTarget, setSelectedRefundTarget] = useState(null);
   const [refundItemType, setRefundItemType] = useState('booking');
@@ -16,6 +16,34 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
   // Privacy consent state
   const [consentOptIn, setConsentOptIn] = useState(Boolean(user?.consent_data_sharing));
   const [consentUpdatedMsg, setConsentUpdatedMsg] = useState('');
+
+  // Devotee Donations State (FR-DON-001..007, FR-REC-001..006, AT-10)
+  const [donations, setDonations] = useState([
+    {
+      id: 1,
+      donation_code: 'DON-KV-2026-0104',
+      temple_name: 'Shri Kashi Vishwanath Temple',
+      campaign_title: 'Maha Annadanam Seva (Daily Free Sacred Meals for 10,000 Devotees)',
+      amount_inr: 5100,
+      donor_pan: 'ABCDE1234F',
+      issuing_legal_entity: 'Shri Kashi Vishwanath Temple Trust (80G Exempt)',
+      tax_exemption_ref: '80G(5)(vi) of Income Tax Act 1961 - AABTK1029NF20214',
+      receipt_number: 'RCP-KASHI-2026-000104',
+      created_at: '2026-10-12',
+      status: 'completed'
+    }
+  ]);
+  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [donationForm, setDonationForm] = useState({
+    campaign_id: '1',
+    amount_inr: '2100',
+    donor_name: user?.name || 'Kaushal Singh',
+    donor_email: user?.email || 'kaushal@example.com',
+    donor_phone: user?.phone || '+91 98765 43210',
+    donor_pan: 'ABCDE1234F'
+  });
+  const [donatingLoading, setDonatingLoading] = useState(false);
+  const [donationSuccessMsg, setDonationSuccessMsg] = useState('');
 
   // Sample or state bookings
   const [bookings, setBookings] = useState([
@@ -90,10 +118,11 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
     let isMounted = true;
     async function loadDevoteeRecords() {
       try {
-        const [bRes, oRes, rRes] = await Promise.all([
+        const [bRes, oRes, rRes, dRes] = await Promise.all([
           bookingService.getMyBookings(),
           orderService.getMyOrders(),
-          refundService.getMyRefunds()
+          refundService.getMyRefunds(),
+          donationService.getMyDonations()
         ]);
         if (!isMounted) return;
         if (bRes.ok && Array.isArray(bRes.data?.data) && bRes.data.data.length > 0) {
@@ -105,6 +134,9 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
         if (rRes.ok && Array.isArray(rRes.data?.data) && rRes.data.data.length > 0) {
           setRefundRequests(rRes.data.data);
         }
+        if (dRes.ok && Array.isArray(dRes.data?.data) && dRes.data.data.length > 0) {
+          setDonations(dRes.data.data);
+        }
       } catch (err) {
         console.warn('Devotee live sync notice:', err.message);
       }
@@ -112,6 +144,46 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
     loadDevoteeRecords();
     return () => { isMounted = false; };
   }, [user]);
+
+  const handleCreateDonation = async (e) => {
+    e.preventDefault();
+    setDonatingLoading(true);
+    setDonationSuccessMsg('');
+
+    try {
+      const res = await donationService.createDonation(donationForm);
+      if (res.ok && res.data?.data) {
+        const { donation, receipt } = res.data.data;
+        const newDonationRecord = {
+          ...donation,
+          receipt_number: receipt.receipt_number,
+          issuing_legal_entity: receipt.issuing_legal_entity,
+          tax_exemption_ref: receipt.tax_exemption_ref
+        };
+        setDonations(prev => [newDonationRecord, ...prev]);
+        setDonationSuccessMsg(`Sacred donation of ₹${donation.amount_inr} confirmed! Official 80G Receipt #${receipt.receipt_number} issued.`);
+        setShowDonationModal(false);
+        // Automatically open the verified 80G receipt
+        onOpenReceipt({
+          booking_code: donation.donation_code,
+          puja_title: `Sacred Donation (${donation.donor_name})`,
+          temple_name: receipt.issuing_legal_entity,
+          total_amount_inr: donation.amount_inr,
+          sankalp_name: donation.donor_name,
+          sankalp_gotra: user?.gotra || 'Kashyap',
+          scheduled_date: new Date().toISOString().split('T')[0],
+          receipt_number: receipt.receipt_number,
+          pan: donationForm.donor_pan
+        });
+      } else {
+        alert(res.data?.error || 'Failed to process donation.');
+      }
+    } catch (err) {
+      alert(err.message || 'Error executing donation.');
+    } finally {
+      setDonatingLoading(false);
+    }
+  };
 
   const handleToggleConsent = async () => {
     const nextVal = !consentOptIn;
@@ -160,6 +232,7 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
       <div className="flex overflow-x-auto space-x-2 sm:space-x-6 border-b border-ivory-200 mb-8 scrollbar-hide text-sm font-bold">
         {[
           { id: 'bookings', label: `My Puja Bookings (${bookings.length})` },
+          { id: 'donations', label: `Sacred Donations (${donations.length})` },
           { id: 'orders', label: `Prasad Orders (${orders.length})` },
           { id: 'refunds', label: `Refund Requests (${refundRequests.length})` },
           { id: 'privacy', label: 'Privacy & Data Consent' }
@@ -251,6 +324,99 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* TAB: SACRED DONATIONS & 80G RECEIPTS (FR-DON-001..007, FR-REC-001..006, AT-10) */}
+        {activeTab === 'donations' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-copper-50 to-ivory-100 p-5 rounded-2xl border border-copper-200">
+              <div className="space-y-1">
+                <h3 className="font-display font-bold text-lg text-charcoal-900 flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-copper-600 fill-copper-100" />
+                  Sacred Temple Donations & 80G Tax Exemptions
+                </h3>
+                <p className="text-xs text-charcoal-600">
+                  Every sacred offering is directly deposited to verified temple trusts with sequential 80G tax exemption receipts.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowDonationModal(true)}
+                className="px-4 py-2.5 rounded-xl bg-copper-600 hover:bg-copper-700 text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition-colors shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Make a Sacred Donation
+              </button>
+            </div>
+
+            {donationSuccessMsg && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{donationSuccessMsg}</span>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {donations.map(d => (
+                <div 
+                  key={d.id}
+                  className="p-5 sm:p-6 rounded-2xl bg-white border border-ivory-200 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-5 hover:border-ivory-300 transition-all"
+                >
+                  <div className="space-y-2 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Verified Donation
+                      </span>
+                      <span className="font-mono text-xs text-charcoal-400">#{d.donation_code}</span>
+                      <span className="text-xs text-charcoal-500">• Contributed: {d.created_at ? d.created_at.split('T')[0] : '2026-10-12'}</span>
+                    </div>
+
+                    <h4 className="font-display font-bold text-base text-charcoal-900">
+                      {d.campaign_title || 'General Temple Seva & Annadanam Fund'}
+                    </h4>
+                    <p className="text-xs text-charcoal-500 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-copper-500" /> {d.temple_name}
+                    </p>
+
+                    <div className="p-3 rounded-xl bg-ivory-50 border border-ivory-200 text-xs text-charcoal-600 space-y-1">
+                      <div>Legal Trust Entity: <strong>{d.issuing_legal_entity || 'Shri Kashi Vishwanath Temple Trust'}</strong></div>
+                      <div className="flex flex-wrap gap-4 text-[11px] text-charcoal-500 pt-0.5">
+                        <span>Donor PAN: <strong className="font-mono text-charcoal-800">{d.donor_pan || 'ABCDE1234F'}</strong></span>
+                        <span>Receipt No: <strong className="font-mono text-copper-600">#{d.receipt_number || 'RCP-KASHI-2026-000104'}</strong></span>
+                        <span className="text-emerald-700 font-medium">✓ 80G(5)(vi) Income Tax Exemption Eligible</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                    <div className="text-left md:text-right">
+                      <span className="text-[11px] text-charcoal-400 uppercase tracking-wider block font-semibold">Offering</span>
+                      <span className="font-mono font-bold text-xl text-copper-600">₹{d.amount_inr}</span>
+                    </div>
+
+                    <button
+                      onClick={() => onOpenReceipt({
+                        booking_code: d.donation_code,
+                        puja_title: d.campaign_title || 'Sacred Temple Donation',
+                        temple_name: d.issuing_legal_entity || d.temple_name,
+                        total_amount_inr: d.amount_inr,
+                        sankalp_name: d.donor_name || user?.name || 'Devotee',
+                        sankalp_gotra: user?.gotra || 'Kashyap',
+                        scheduled_date: d.created_at ? d.created_at.split('T')[0] : '2026-10-12',
+                        receipt_number: d.receipt_number || 'RCP-KASHI-2026-000104',
+                        pan: d.donor_pan || 'ABCDE1234F'
+                      })}
+                      className="px-4 py-2.5 rounded-xl border border-copper-300 bg-white hover:bg-copper-50 text-copper-800 font-semibold text-xs flex items-center gap-1.5 shadow-xs transition-colors shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5 text-copper-600" />
+                      80G Tax Receipt
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -436,17 +602,141 @@ export default function UserAccountDashboard({ user, onOpenReceipt, wishlist, te
         />
       )}
 
-      {/* Refund Request Modal */}
-      {selectedRefundTarget && (
-        <RefundRequestModal 
-          targetItem={selectedRefundTarget} 
-          itemType={refundItemType}
-          onClose={() => setSelectedRefundTarget(null)}
-          onSuccess={(newReq) => {
-            if (newReq) setRefundRequests(prev => [newReq, ...prev]);
-            setSelectedRefundTarget(null);
-          }}
-        />
+      {/* Sacred Donation Modal (FR-DON-001..007, AT-10) */}
+      {showDonationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-900/60 backdrop-blur-xs animate-fade-in font-sans">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-ivory-300 space-y-5 animate-scale-up">
+            <div className="flex justify-between items-center border-b border-ivory-200 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-copper-50 text-copper-600 flex items-center justify-center font-bold">
+                  <Heart className="w-5 h-5 fill-copper-100" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-lg text-charcoal-900">Make a Sacred Offering</h3>
+                  <p className="text-xs text-charcoal-500">100% Tax Exempt under Sec 80G(5)(vi)</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowDonationModal(false)}
+                className="w-8 h-8 rounded-full bg-ivory-100 hover:bg-ivory-200 text-charcoal-600 flex items-center justify-center text-sm font-bold transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateDonation} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-charcoal-700 font-semibold mb-1">Select Sacred Purpose / Campaign</label>
+                <select
+                  value={donationForm.campaign_id}
+                  onChange={e => setDonationForm({ ...donationForm, campaign_id: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-ivory-300 bg-white text-charcoal-900 focus:outline-hidden focus:border-copper-500"
+                >
+                  <option value="1">Shri Kashi Vishwanath — Maha Annadanam Seva</option>
+                  <option value="2">Tirupati Balaji — Vedic Gaushala & Gir Cow Protection</option>
+                  <option value="3">Shree Siddhivinayak — Temple Gold Kalash Renovation Fund</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-charcoal-700 font-semibold mb-1">Offering Amount (INR)</label>
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {['501', '1100', '2100', '5100'].map(amt => (
+                    <button
+                      type="button"
+                      key={amt}
+                      onClick={() => setDonationForm({ ...donationForm, amount_inr: amt })}
+                      className={`py-1.5 rounded-lg border text-xs font-mono font-semibold transition-colors ${
+                        donationForm.amount_inr === amt
+                          ? 'bg-copper-600 text-white border-copper-600 shadow-xs'
+                          : 'bg-ivory-50 text-charcoal-700 border-ivory-300 hover:bg-ivory-100'
+                      }`}
+                    >
+                      ₹{amt}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  required
+                  min="100"
+                  value={donationForm.amount_inr}
+                  onChange={e => setDonationForm({ ...donationForm, amount_inr: e.target.value })}
+                  placeholder="Or enter custom amount in ₹"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-ivory-300 font-mono text-charcoal-900 focus:outline-hidden focus:border-copper-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-charcoal-700 font-semibold mb-1">Donor Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={donationForm.donor_name}
+                    onChange={e => setDonationForm({ ...donationForm, donor_name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-ivory-300 text-charcoal-900 focus:outline-hidden focus:border-copper-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-charcoal-700 font-semibold mb-1">Donor PAN (for 80G Tax Exemption)</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={10}
+                    value={donationForm.donor_pan}
+                    onChange={e => setDonationForm({ ...donationForm, donor_pan: e.target.value.toUpperCase() })}
+                    placeholder="ABCDE1234F"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-ivory-300 font-mono text-charcoal-900 focus:outline-hidden focus:border-copper-500 uppercase"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-charcoal-700 font-semibold mb-1">Donor Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={donationForm.donor_email}
+                    onChange={e => setDonationForm({ ...donationForm, donor_email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-ivory-300 text-charcoal-900 focus:outline-hidden focus:border-copper-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-charcoal-700 font-semibold mb-1">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={donationForm.donor_phone}
+                    onChange={e => setDonationForm({ ...donationForm, donor_phone: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-ivory-300 text-charcoal-900 focus:outline-hidden focus:border-copper-500"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-800 text-[11px] space-y-0.5">
+                <span className="font-semibold block">Statutory Assurance:</span>
+                <span>An authentic 80G tax receipt will be issued instantaneously under the temple trust's verified registration.</span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={donatingLoading}
+                className="w-full py-3 rounded-xl bg-copper-600 hover:bg-copper-700 text-white font-bold text-sm shadow-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {donatingLoading ? (
+                  <span>Processing Sacred Offering...</span>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-temple-gold-300" />
+                    <span>Complete Offering of ₹{donationForm.amount_inr}</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
     </div>
