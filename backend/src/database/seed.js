@@ -449,13 +449,136 @@ export async function seedDatabase() {
     ON CONFLICT (id) DO NOTHING;
   `);
 
-  // 16. Resync all primary key sequences in PostgreSQL
+  // 16. Seed Support Cases (FR-SUP-001..005)
+  await query(`
+    INSERT INTO support_cases (
+      id, ticket_number, tenant_name, requester_email, requester_name,
+      subject, category, priority, sla_target_hours, status, assigned_to, resolution_notes
+    )
+    VALUES
+    (
+      1, 'CASE-2026-0041', 'Shri Kashi Vishwanath Temple', 'admin@shirikashivishwanath.org', 'Pt. Someshwar Dixit',
+      'Devotee UPI payment unconfirmed during Shivaratri surge', 'payment_reconciliation', 'high', 12, 'in_progress',
+      'Super Admin (Platform Support)', 'Investigating gateway transaction reference; auto-reconciliation job running.'
+    ),
+    (
+      2, 'CASE-2026-0042', 'Sri Venkateswara Swamy Temple (Tirupati Balaji)', 'trustee@tirupatibalaji.org', 'TTD Secretariat',
+      'Renewal of 14-digit FSSAI license for Laddu packaging facility', 'fssai_compliance', 'medium', 24, 'resolved',
+      'Compliance Officer', 'Verified renewed statutory license #12423999000219. Verified & prasad status unblocked.'
+    ),
+    (
+      3, 'CASE-2026-0043', 'Shree Siddhivinayak Temple, Mumbai', 'trust@siddhivinayak.org', 'Trust Admin',
+      'Custom domain DNS Let''s Encrypt renewal for live.siddhivinayak.org', 'domain_tls', 'high', 8, 'open',
+      'DevOps Lead', 'DNS TXT token validated; awaiting automated TLS provisioning trigger.'
+    ),
+    (
+      4, 'CASE-2026-0044', 'Shri Kashi Vishwanath Temple', 'support@shirimandir.org', 'Pooja Deshmukh',
+      'Devotee request for rescheduling of Rudrabhishek to Karthik Purnima', 'booking_dispute', 'low', 48, 'resolved',
+      'Priest Roster Coordinator', 'Slot moved to 2026-11-15 with devotee consent.'
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 17. Seed Controlled Privileged Access Sessions (FR-SEC-001..004)
+  await query(`
+    INSERT INTO privileged_access_sessions (
+      id, session_code, actor_email, target_tenant_name,
+      access_level, justification, authorized_by, expires_at, status, ip_address
+    )
+    VALUES
+    (
+      1, 'BRK-2026-001', 'superadmin@shirimandir.org', 'Shri Kashi Vishwanath Temple',
+      'emergency_break_glass', 'Investigate gateway double-capture reconciliation mismatch during festival rush',
+      'Chief Technology Officer (Dual Approval)', '2026-10-16 18:00:00', 'active', '127.0.0.1'
+    ),
+    (
+      2, 'AUD-2026-002', 'compliance.lead@shirimandir.org', 'Sri Venkateswara Swamy Temple (Tirupati Balaji)',
+      'read_only_audit', 'Quarterly 80G tax exemption and financial ledger integrity audit',
+      'Internal Audit Board', '2026-10-15 23:59:59', 'expired', '127.0.0.1'
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 18. Seed Platform Configuration Management (FR-CFG-001..004)
+  await query(`
+    INSERT INTO platform_configurations (
+      id, config_key, config_value, category, description, is_sensitive, last_modified_by
+    )
+    VALUES
+    (
+      1, 'gateway.hmac_enforcement_mode', 'STRICT_ENFORCE', 'security',
+      'Drop and isolate webhooks without valid HMAC SHA-256 signatures per AT-05', 0, 'superadmin@shirimandir.org'
+    ),
+    (
+      2, 'fssai.strict_validation_required', 'true', 'compliance',
+      'Block publishing of edible prasad items without 14-digit verified license per Rule 2', 0, 'superadmin@shirimandir.org'
+    ),
+    (
+      3, 'rate_limit.max_requests_per_minute', '120', 'traffic',
+      'Max API calls per devotee/admin session before rate throttling per FR-AUTH-005', 0, 'superadmin@shirimandir.org'
+    ),
+    (
+      4, 'payment.webhook_retry_max_attempts', '5', 'payments',
+      'Maximum retry attempts with exponential backoff before sending to quarantine DLQ', 0, 'superadmin@shirimandir.org'
+    ),
+    (
+      5, 'maintenance.platform_read_only_mode', 'false', 'operations',
+      'Emergency switch to put all tenant bookings into read-only darshan queue', 0, 'superadmin@shirimandir.org'
+    ),
+    (
+      6, 'settlement.direct_trust_payout_ratio', '100', 'finance',
+      'Percentage of devotee puja & donation revenue settled directly to temple trust bank accounts', 0, 'superadmin@shirimandir.org'
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 19. Seed Platform Subscriptions & Direct Settlement (FR-REP-006, FR-AUD-006)
+  await query(`
+    INSERT INTO platform_subscriptions (
+      id, tenant_name, plan_tier, monthly_price_paise, status, next_billing_date, direct_settlement_enabled
+    )
+    VALUES
+    (
+      1, 'Shri Kashi Vishwanath Temple', 'vedic_enterprise', 2500000, 'active', '2026-11-01', 1
+    ),
+    (
+      2, 'Sri Venkateswara Swamy Temple (Tirupati Balaji)', 'vedic_enterprise', 2500000, 'active', '2026-11-01', 1
+    ),
+    (
+      3, 'Shree Siddhivinayak Temple, Mumbai', 'gold_mandir', 1200000, 'active', '2026-11-05', 1
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 20. Seed Configurable Alert Rules (FR-ALT-001..004)
+  await query(`
+    INSERT INTO alert_rules (
+      id, name, condition_type, threshold_value, time_window_minutes, severity, is_enabled
+    )
+    VALUES
+    (
+      1, 'Payment Webhook Quarantine Spike', 'reconciliation_exceptions_count > 3', 3, 10, 'critical', 1
+    ),
+    (
+      2, 'Failed Login Brute Force Alert', 'failed_auth_attempts > 10', 10, 5, 'warning', 1
+    ),
+    (
+      3, 'Unapproved Prasad Direct Publish Attempt', 'fssai_bypass_attempts > 0', 1, 1, 'critical', 1
+    ),
+    (
+      4, 'Consecrated Volume Daily Target Alert', 'daily_gmv_paise > 5000000', 5000000, 1440, 'info', 1
+    )
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // 21. Resync all primary key sequences in PostgreSQL
   if (getDbEngine() === 'postgresql') {
     try {
       const tables = [
         'users', 'temples', 'pujas', 'puja_packages', 'prasad_items',
         'bookings', 'orders', 'order_items', 'payments', 'refund_requests',
-        'donation_campaigns', 'donations', 'receipts', 'audit_logs', 'reconciliation_exceptions'
+        'donation_campaigns', 'donations', 'receipts', 'audit_logs', 'reconciliation_exceptions',
+        'support_cases', 'privileged_access_sessions', 'platform_configurations', 'platform_subscriptions', 'alert_rules'
       ];
       for (const tbl of tables) {
         await query(`SELECT setval(pg_get_serial_sequence('${tbl}', 'id'), COALESCE((SELECT MAX(id) FROM ${tbl}), 1), true);`).catch(() => {});

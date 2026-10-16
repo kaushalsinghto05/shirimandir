@@ -150,7 +150,8 @@ export async function initDb() {
       const tables = [
         'users', 'temples', 'pujas', 'puja_packages', 'prasad_items',
         'bookings', 'orders', 'order_items', 'payments', 'refund_requests',
-        'donation_campaigns', 'donations', 'receipts', 'audit_logs', 'reconciliation_exceptions'
+        'donation_campaigns', 'donations', 'receipts', 'audit_logs', 'reconciliation_exceptions',
+        'support_cases', 'privileged_access_sessions', 'platform_configurations', 'platform_subscriptions', 'alert_rules'
       ];
       for (const tbl of tables) {
         await pgPool.query(`SELECT setval(pg_get_serial_sequence('${tbl}', 'id'), COALESCE((SELECT MAX(id) FROM ${tbl}), 1), true);`).catch(() => {});

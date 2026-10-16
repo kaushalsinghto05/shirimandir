@@ -386,6 +386,77 @@ CREATE TABLE IF NOT EXISTS reconciliation_exceptions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 16. SUPPORT CASE MANAGEMENT (FR-SUP-001..005)
+CREATE TABLE IF NOT EXISTS support_cases (
+    id SERIAL PRIMARY KEY,
+    ticket_number VARCHAR(64) UNIQUE NOT NULL,
+    tenant_name VARCHAR(255) NOT NULL,
+    requester_email VARCHAR(255) NOT NULL,
+    requester_name VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    category VARCHAR(64) NOT NULL CHECK (category IN ('payment_reconciliation', 'fssai_compliance', 'domain_tls', 'booking_dispute', 'technical')),
+    priority VARCHAR(32) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical')),
+    sla_target_hours INTEGER DEFAULT 24,
+    status VARCHAR(32) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'pending_tenant', 'resolved', 'closed')),
+    assigned_to VARCHAR(255) DEFAULT 'Unassigned',
+    resolution_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 17. CONTROLLED PRIVILEGED ACCESS SESSIONS (FR-SEC-001..004)
+CREATE TABLE IF NOT EXISTS privileged_access_sessions (
+    id SERIAL PRIMARY KEY,
+    session_code VARCHAR(64) UNIQUE NOT NULL,
+    actor_email VARCHAR(255) NOT NULL,
+    target_tenant_name VARCHAR(255) NOT NULL,
+    access_level VARCHAR(64) NOT NULL CHECK (access_level IN ('read_only_audit', 'emergency_break_glass', 'financial_reconciliation')),
+    justification TEXT NOT NULL,
+    authorized_by VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'revoked', 'expired')),
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 18. PLATFORM CONFIGURATION MANAGEMENT (FR-CFG-001..004)
+CREATE TABLE IF NOT EXISTS platform_configurations (
+    id SERIAL PRIMARY KEY,
+    config_key VARCHAR(128) UNIQUE NOT NULL,
+    config_value TEXT NOT NULL,
+    category VARCHAR(64) NOT NULL DEFAULT 'system',
+    description TEXT,
+    is_sensitive BOOLEAN DEFAULT FALSE,
+    last_modified_by VARCHAR(255),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 19. PLATFORM SUBSCRIPTIONS & DIRECT SETTLEMENT (FR-REP-006, FR-AUD-006)
+CREATE TABLE IF NOT EXISTS platform_subscriptions (
+    id SERIAL PRIMARY KEY,
+    tenant_name VARCHAR(255) NOT NULL,
+    plan_tier VARCHAR(64) NOT NULL CHECK (plan_tier IN ('silver_trust', 'gold_mandir', 'vedic_enterprise')),
+    monthly_price_paise INTEGER NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'trial', 'past_due', 'cancelled')),
+    next_billing_date DATE NOT NULL,
+    direct_settlement_enabled BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 20. CONFIGURABLE ALERT RULES (FR-ALT-001..004)
+CREATE TABLE IF NOT EXISTS alert_rules (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    condition_type VARCHAR(128) NOT NULL,
+    threshold_value INTEGER NOT NULL,
+    time_window_minutes INTEGER NOT NULL,
+    severity VARCHAR(32) NOT NULL CHECK (severity IN ('info', 'warning', 'critical')),
+    is_enabled BOOLEAN DEFAULT TRUE,
+    last_triggered_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
 -- INDEXES FOR FAST AUDIT & QUERY PERFORMANCE
 CREATE INDEX IF NOT EXISTS idx_temples_verification ON temples(verification_status);
 CREATE INDEX IF NOT EXISTS idx_prasad_fssai ON prasad_items(fssai_license_no);

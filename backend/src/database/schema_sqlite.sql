@@ -362,3 +362,74 @@ CREATE TABLE IF NOT EXISTS reconciliation_exceptions (
     resolution_notes TEXT,
     created_at TEXT DEFAULT (datetime('now'))
 );
+
+-- 16. SUPPORT CASE MANAGEMENT (FR-SUP-001..005)
+CREATE TABLE IF NOT EXISTS support_cases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_number TEXT UNIQUE NOT NULL,
+    tenant_name TEXT NOT NULL,
+    requester_email TEXT NOT NULL,
+    requester_name TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('payment_reconciliation', 'fssai_compliance', 'domain_tls', 'booking_dispute', 'technical')),
+    priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical')),
+    sla_target_hours INTEGER DEFAULT 24,
+    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'pending_tenant', 'resolved', 'closed')),
+    assigned_to TEXT DEFAULT 'Unassigned',
+    resolution_notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 17. CONTROLLED PRIVILEGED ACCESS SESSIONS (FR-SEC-001..004)
+CREATE TABLE IF NOT EXISTS privileged_access_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_code TEXT UNIQUE NOT NULL,
+    actor_email TEXT NOT NULL,
+    target_tenant_name TEXT NOT NULL,
+    access_level TEXT NOT NULL CHECK (access_level IN ('read_only_audit', 'emergency_break_glass', 'financial_reconciliation')),
+    justification TEXT NOT NULL,
+    authorized_by TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'revoked', 'expired')),
+    ip_address TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 18. PLATFORM CONFIGURATION MANAGEMENT (FR-CFG-001..004)
+CREATE TABLE IF NOT EXISTS platform_configurations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    config_key TEXT UNIQUE NOT NULL,
+    config_value TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'system',
+    description TEXT,
+    is_sensitive INTEGER DEFAULT 0,
+    last_modified_by TEXT,
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 19. PLATFORM SUBSCRIPTIONS & DIRECT SETTLEMENT (FR-REP-006, FR-AUD-006)
+CREATE TABLE IF NOT EXISTS platform_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tenant_name TEXT NOT NULL,
+    plan_tier TEXT NOT NULL CHECK (plan_tier IN ('silver_trust', 'gold_mandir', 'vedic_enterprise')),
+    monthly_price_paise INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'trial', 'past_due', 'cancelled')),
+    next_billing_date TEXT NOT NULL,
+    direct_settlement_enabled INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 20. CONFIGURABLE ALERT RULES (FR-ALT-001..004)
+CREATE TABLE IF NOT EXISTS alert_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    condition_type TEXT NOT NULL,
+    threshold_value INTEGER NOT NULL,
+    time_window_minutes INTEGER NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'critical')),
+    is_enabled INTEGER DEFAULT 1,
+    last_triggered_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+

@@ -284,6 +284,17 @@ export const adminService = {
   reviewRefund: (id, status, admin_notes) => apiRequest(`/admin/refunds/${id}/review`, { method: 'PUT', body: { status, admin_notes } }),
   getAuditLogs: (limit = 50) => apiRequest(`/admin/audit-logs?limit=${limit}`),
   getReconciliations: () => apiRequest('/admin/reconciliations'),
-  getReports: () => apiRequest('/admin/reports')
+  getReports: () => apiRequest('/admin/reports'),
+  getSupportCases: () => apiRequest('/admin/support-cases'),
+  updateSupportCase: (id, data) => apiRequest(`/admin/support-cases/${id}`, { method: 'PUT', body: data }),
+  getPrivilegedAccessSessions: () => apiRequest('/admin/privileged-access'),
+  createPrivilegedAccessSession: (data) => apiRequest('/admin/privileged-access', { method: 'POST', body: data }),
+  revokePrivilegedAccessSession: (code) => apiRequest(`/admin/privileged-access/${code}/revoke`, { method: 'PUT' }),
+  getConfigurations: () => apiRequest('/admin/configurations'),
+  updateConfiguration: (key, config_value) => apiRequest(`/admin/configurations/${key}`, { method: 'PUT', body: { config_value } }),
+  getSubscriptions: () => apiRequest('/admin/subscriptions'),
+  getAlertRules: () => apiRequest('/admin/alert-rules'),
+  updateAlertRule: (id, data) => apiRequest(`/admin/alert-rules/${id}`, { method: 'PUT', body: data }),
+  exportData: (data) => apiRequest('/admin/export', { method: 'POST', body: data })
 };
 
