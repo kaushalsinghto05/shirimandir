@@ -26,6 +26,14 @@ export async function seedDatabase() {
     ON CONFLICT (id) DO NOTHING;
   `, [passwordHash]);
 
+  // Standard Devotee Account (devotee@shirimandir.org)
+  await query(`
+    INSERT INTO users (name, email, password_hash, phone, role, gotra, rashi, nakshatra, profile_completed, consent_data_sharing)
+    VALUES 
+    ('Devotee Shiri Mandir', 'devotee@shirimandir.org', $1, '+919876500000', 'devotee', 'Kashyap', 'Dhanu', 'Moola', TRUE, TRUE)
+    ON CONFLICT (email) DO NOTHING;
+  `, [passwordHash]);
+
   // Temple Partner (Priest / Coordinator)
   await query(`
     INSERT INTO users (id, name, email, password_hash, phone, role, profile_completed)

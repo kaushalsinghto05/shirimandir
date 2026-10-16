@@ -352,6 +352,39 @@ export default function App() {
     }
   };
 
+  // Direct Devotee Dashboard opener
+  const handleOpenDevotee = () => {
+    if (!user) {
+      navigate('/login');
+    } else if (!user.profile_completed) {
+      navigate('/complete-profile');
+    } else {
+      navigate('/devotee/dashboard');
+    }
+  };
+
+  // Direct Admin Dashboard opener
+  const handleOpenAdmin = () => {
+    if (!user) {
+      navigate('/login');
+    } else if (!user.profile_completed) {
+      navigate('/complete-profile');
+    } else {
+      navigate('/admin/dashboard');
+    }
+  };
+
+  // Switch back to Devotee session
+  const handleSwitchToDevotee = () => {
+    if (!user) {
+      navigate('/login');
+    } else if (!user.profile_completed) {
+      navigate('/complete-profile');
+    } else {
+      navigate('/devotee/dashboard');
+    }
+  };
+
   // Stepper Transition: Details -> Payment
   const handleProceedToPayment = (payload) => {
     setActiveBookingService(null);
@@ -513,9 +546,11 @@ export default function App() {
         onLogout={handleLogout}
         wishlistCount={wishlist.length}
         onOpenWishlist={() => setWishlistDrawerOpen(true)}
-        isAdminMode={false}
-        setIsAdminMode={() => navigate('/admin/dashboard')}
+        isAdminMode={user?.role === 'admin' || user?.role === 'super_admin'}
+        setIsAdminMode={handleOpenAdmin}
         onOpenAccount={handleOpenAccount}
+        onOpenDevotee={handleOpenDevotee}
+        onOpenAdmin={handleOpenAdmin}
       />
 
       <main className={`flex-1 ${activeTab !== 'home' ? 'pt-16 md:pt-20' : ''}`}>
@@ -721,6 +756,15 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      {/* Role and Portal Navigation Aliases */}
+      <Route path="/devotee" element={<Navigate to="/devotee/dashboard" replace />} />
+      <Route path="/portal" element={<Navigate to="/devotee/dashboard" replace />} />
+      <Route path="/account" element={<Navigate to="/devotee/dashboard" replace />} />
+      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
+      <Route path="/superadmin" element={<Navigate to="/super-admin/dashboard" replace />} />
+      <Route path="/superadmin/dashboard" element={<Navigate to="/super-admin/dashboard" replace />} />
 
       {/* 8. Fallback: Unknown routes redirect to Home gate */}
       <Route path="*" element={<Navigate to="/" replace />} />

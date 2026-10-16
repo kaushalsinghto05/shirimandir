@@ -763,6 +763,8 @@ export default function App() {
       <Route path="/account" element={<Navigate to="/devotee/dashboard" replace />} />
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="/super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
+      <Route path="/superadmin" element={<Navigate to="/super-admin/dashboard" replace />} />
+      <Route path="/superadmin/dashboard" element={<Navigate to="/super-admin/dashboard" replace />} />
 
       {/* 8. Fallback: Unknown routes redirect to Home gate */}
       <Route path="*" element={<Navigate to="/" replace />} />
